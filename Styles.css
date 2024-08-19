@@ -1,3 +1,86 @@
+.bodyMain  {
+    color: #fff;
+    background-color: #000;
+    margin: 0px;
+    padding: 0px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#start.screen {
+    width: 80%;
+    height: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.startScreen {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.startPoker {
+    max-width: auto;
+    height: 60%;
+    display: block;
+    margin: 0 auto;
+}
+
+.startHack {
+    max-width: auto;
+    height: 15%;
+    display: block;
+    margin: 0 auto;
+}
+
+.mainButton  {
+    outline: none;
+    border: none;
+    border: collapse;
+    border-radius: 8px;
+    margin-top: 80px;
+    padding: 10px;
+    color: #fff;
+    background-color: #2ecc71;
+    font-size: 1.2em;
+    cursor: pointer;
+    position: absolute;
+    left: 50%;
+    top: 90%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+}
+
+.mainButton:hover  {
+    background-color: #3498db;
+}
+
+#load {
+    font-size: 3em;
+}
+
+#load.screen {
+    animation: fadeIn 2s infinite alternate;
+}
+
+.footerMain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: white;
+    padding: 5px 10px;
+    border-bottom-right-radius: 5px;
+}
+
+.footerLink {
+    color: rgb(0, 81, 255);
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+}
 
 
 /* Specific Poker.html styles */
