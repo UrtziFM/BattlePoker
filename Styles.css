@@ -69,7 +69,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    background: white;
+    background: black;
     padding: 5px 10px;
     border-bottom-right-radius: 5px;
 }
@@ -84,6 +84,32 @@
 
 
 /* Specific Poker.html styles */
+
+body {
+    background-color: #000; 
+    color: #fff; 
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 50%;
+}
+
+img.pokerRules {
+    width: 40%; 
+    height: auto;
+    margin-left: auto;
+    padding: 20px;
+    align-self: center;
+}
 
 .playersRow [data-status] {
     min-height: 85px;
