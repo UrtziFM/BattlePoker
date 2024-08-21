@@ -96,23 +96,41 @@ body {
     height: 100vh;
 }
 
-.container {
+.containerMain {
     display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 50%;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
 }
 
-img.pokerRules {
-    width: 40%; 
+
+.containerRight {
+    width: 40%;
+    margin: 0 1%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.containerCenter {
+    width: 55%;
+    margin: 0 1%;
+    background-color: #1a1a1a; /* Fondo del contenedor principal */
+    padding: 50px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.containerRight img {
+    max-width: 100%;
     height: auto;
-    margin-left: auto;
-    padding: 20px;
-    align-self: center;
 }
 
 .playersRow [data-status] {
-    min-height: 85px;
+    min-height: 75px;
 }
 
 @media (max-width: 768px) {
