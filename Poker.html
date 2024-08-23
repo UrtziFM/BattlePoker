@@ -31,7 +31,8 @@
     <div class="containerMain">
         <div class="containerCenter">
             <div class="button-group-left">
-                <button class="btn btn-primary btn-lg p-2 deal-button" title="Deal" onClick="javascript:deal()">Deal $10</button>
+                <p class="money-pot">Your Money Pot: $<span id="playerMoney"></span></p>
+                <button class="btn btn-primary btn-lg p-2 deal-button" title="Deal" onClick="javascript:deal()">Opening Bet: $10</button>
             </div>
             <div class="button-group-right">
                 <button class="btn btn-secondary raise-button" data-round="max" title="max"
@@ -42,37 +43,29 @@
                     onClick="javascript:match(false,1)">Match to</button>
                 <button class="btn btn-secondary check-button" data-round="check" title="check"
                     onClick="javascript:match(true,1)">Check</button>
-                <button id="foldBt" class="btn btn-danger fold-button" onClick="javascript:fold()">Fold</button>
+                <button id="foldBt" class="btn btn-secondary fold-button" onClick="javascript:fold()">Fold</button>
             </div>
-                <div class="col-md-12">
-                    <div class="alert alert-info" role="alert" id="notification">
-                            <div class="col-6">
-                                <h3>Balance: $<span id="playerMoney"></span></h3>
-                            </div>
-                            <div class="col-6 d-flex justify-content-center">
-                                <h3 id="betTarget" alt="Texas Hold'em Poker Game">TEXAS HOLDEM <span
-                                        class="text-danger">(STATUS: BETA TESTING)</span></h3>
-                                <div class="form-group d-none">
+                <div class="alert alert-info d-flex justify-content-between" role="alert" id="notification">
+                            <p id="betTarget" alt="Texas Hold'em Poker Game"><span 
+                                    class="text-danger"></span>Welcome Player</p>
+                            <!--Hide players selection-->
+                            <div class="form-group d-none"> 
                                 <select class="form-control hide" id="howManyopponents">
                                     <option value="1">1 opponent</option>
                                     <option value="2">2 opponents</option>
                                     <option value="3" selected>3 opponents</option>
                                 </select>
-                                </div>
                             </div>
-                            <div class="col-md-12 hide" id="status">
-                                <h3 id="message"></h3>
-                            </div>
-                    </div>
+                        <div class="col-md-12 hide" id="status">
+                            <p id="message">Press Button to Open</p>
+                        </div>
+                        <div class="communityCardDetails" id="communityCardDetails" role="alert" data-player="4">
+                        </div>
                 </div>
-                <div class="col-md-12">
+                <!--Review from here-->
+                <div class="playingCards">
                     <div id="communityCards"></div>
-                    <div class="col-md-12">
-                        <div class="alert alert-info capitalize hide" id="communityCardDetails" role="alert"
-                            data-player="4"></div>
-                    </div>
-                </div>
-                
+                </div> 
             <div class="row playersRow">
                 <div class="col-md-3">
                     <div class="col-md-12">
