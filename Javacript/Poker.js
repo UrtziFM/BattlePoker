@@ -860,6 +860,7 @@ function deal() {
     document.querySelector("button[title='Deal']").disabled = true;
     document.querySelector("button[title='Deal']").classList.add("hide");
     cards = JSON.parse(localStorage.getItem("completeCards"));
+
     function generatePlayer(iteration) {
         cardsInvolved = "";
         let playersCards = [];
