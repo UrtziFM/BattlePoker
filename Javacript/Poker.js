@@ -59,14 +59,14 @@ function setPlayerMoney(winLoseBet) {
 function resetPlayerMoney() {
     if (playerMoney <= 0) {
         // Tell player he is out
-        const confirmation = confirm("You are broken so I guess you didn't do the math, do you want to start again?");
+        const confirmation = confirm("You are broken so I guess you didn't DO THE MATH, do you want to start again?");
 
         if (confirmation) {
             // Once confirmed restart
             playerMoney = 500;
             localStorage.setItem('balance', playerMoney);
             document.querySelector("#playerMoney").innerHTML = playerMoney;
-            alert("Your Balance is again $500. ¡This time Do The Math!");
+            alert("Your Balance is again $500. ¡This time DO THE MATH!");
         } else {
             // Disable the game unless get player confirmation
             alert("The game is disabled, please refresh the page to start again.");
@@ -98,7 +98,7 @@ function disableGame() {
             };
         });
     });
-    document.getElementById("betTarget").innerHTML = "The game is disabled, please refresh the page to start again.";
+    document.getElementById("betTarget").innerHTML = "The game is disabled because you didn't Do The Math, please refresh the page to start again.";
 }
 
 
