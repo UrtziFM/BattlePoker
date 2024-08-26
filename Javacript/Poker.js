@@ -1,6 +1,7 @@
 let playedTimes = 0;
 let maxBetHit = false;
 let dblBets = false;
+let hasRaised = false;
 localStorage.setItem("completeCards", JSON.stringify(cards));
 const activeCards = JSON.parse(localStorage.getItem("completeCards"));
 const handHeirarchy = ["high-card", "pair", "two-pairs", "three-of-a-kind", "straight", "flush", "full-house", "four-of-a-kind", "straight-flush", "royal-flush"];
@@ -46,7 +47,6 @@ let bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
 let bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
 let bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
 let monetaryVal = [null, 10, bet1, bet2, bet3];
-let hasRaised = false;
 
 function setPlayerMoney(winLoseBet) {
     document.getElementById("betTarget").innerHTML = "Bet $" + bet;
@@ -768,18 +768,13 @@ function evaluateHand(iteration, gameStep) {
 }
 
 function match(checked, betMultiplier) {
-    // Si el multiplicador es 2 o 3, significa que alguien ha subido la apuesta
-    if (betMultiplier === 3 || betMultiplier === 2) {
+    if (betMultiplier >= 2) {
         maxBetHit = true;
-        hasRaised = true; // Marcamos que se ha subido la apuesta
+        hasRaised = true;
     }
 
-    // Deshabilitar los botones según la lógica del juego
     document.querySelector("[data-round='check']").disabled = hasRaised;
-    document.querySelector("[data-round='match']").disabled = false;
-    document.querySelector("[data-round='max']").disabled = false;
 
-    // Avanzar al siguiente paso del juego
     gameIncrement++;
     let gameStep = gameIncrement;
     let maxLength = gameStep < 4 ? gameStep + 1 : 5;
@@ -787,7 +782,6 @@ function match(checked, betMultiplier) {
     document.getElementById("communityCardDetails").classList.remove("hide");
 
     if (!checked) {
-        // Generación de apuestas para los jugadores que suben la apuesta
         const bluffList = [
             Math.floor(Math.random() * (100 - 10) + 10),
             Math.floor(Math.random() * (100 - 50) + 50),
@@ -797,7 +791,7 @@ function match(checked, betMultiplier) {
             Math.floor(Math.random() * (300 - 250) + 250),
         ];
 
-        if (dblBets === true || bluffList.includes(bet1) || bluffList.includes(bet2) || bluffList.includes(bet3) && !updatedBets) {
+        if (dblBets || bluffList.includes(bet1) || bluffList.includes(bet2) || bluffList.includes(bet3) && !updatedBets) {
             maxBet = [400, 500, 900];
             bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
             bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
@@ -806,27 +800,22 @@ function match(checked, betMultiplier) {
             updatedBets = true;
         }
 
-        // Actualización de la apuesta y del pozo
         thePot += monetaryVal[gameStep] * activePlayers.length;
         bet += monetaryVal[gameStep] * betMultiplier;
         playerMoney -= monetaryVal[gameStep];
         setPlayerMoney("betting");
 
-        // Actualización de los textos de los botones
         document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
         document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep + 1] * 3);
     } else {
-        // Si se hace un check y no ha habido subida de apuestas
         document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
         document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep] * betMultiplier);
     }
 
-    // Actualización del balance del jugador y del objetivo de apuesta
     document.getElementById("playerMoney").innerHTML = playerMoney;
     document.getElementById("betTarget").innerHTML = "Bet $" + bet;
 
-    // Construcción de las cartas comunitarias basadas en la etapa del juego
-    if (gameStep === 2) { /* the flop */
+    if (gameStep === 2) {
         communityCards = [];
         document.getElementById("communityCardDetails").classList.remove("hide");
         buildCommunityCards(3, gameStep);
@@ -834,7 +823,6 @@ function match(checked, betMultiplier) {
         buildCommunityCards(maxLength, gameStep);
     }
 
-    // Evaluación de las manos de los jugadores
     let evaled = [];
     for (let i = 0; i < activePlayers.length; i++) {
         if (!evaled.includes(activePlayers[i]) && activePlayers[i] !== undefined) {
@@ -842,10 +830,15 @@ function match(checked, betMultiplier) {
             evaled.push(activePlayers[i]);
         }
     }
+
+    if (hasRaised) {
+        document.querySelector("[data-round='check']").disabled = true;
+    }
 }
 
 function deal() {
     resetPlayerMoney();
+    hasRaised = false;
     for (let i = 0; i < playerIds.length; i++) {
         document.getElementById(playerIds[i]).innerHTML = ""
     }
