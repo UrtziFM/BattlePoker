@@ -160,6 +160,10 @@ function clear(action) {
 function fold() {
     document.getElementById("betTarget").innerHTML = "Folded. You lost $" + bet + ". Place your bet.";
     buildCommunityCards(5, "default");
+    document.querySelector("[data-round='max']").disabled = true;
+    document.querySelector("[data-round='raise']").disabled = true;
+    document.querySelector("[data-round='match']").disabled = true;
+    document.querySelector("[data-round='check']").disabled = true;
     clear("fold");
     window.location = "#";
 }
@@ -901,7 +905,7 @@ function deal() {
     document.querySelector("[data-round='max']").innerHTML = "Max $" + monetaryVal[2] * 3;
     clear("deal");
     countingIterations = 0;
-    
+
     document.getElementById("foldBt").classList.remove("hide");
     document.getElementById("foldBt").disabled = false;
 
