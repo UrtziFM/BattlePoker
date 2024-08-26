@@ -242,7 +242,7 @@ function removeActivePlyr(plyrID) {
 
 function evaluateHand(iteration, gameStep) {
     let stepPlayed = false;
-    document.getElementById("communityCardDetails").innerHTML = "<h3>The " + gameStepHierarchy[gameStep] + " - Pot: $" + thePot + "</h3>";
+    document.getElementById("communityCardDetails").innerHTML = "The " + gameStepHierarchy[gameStep] + " - Pot: $" + thePot;
     document.getElementById("raiseAmt").innerHTML = "$" + (monetaryVal[gameIncrement + 1] * 2);
     document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameIncrement + 1] * 3);
     countingIterations = iteration;
