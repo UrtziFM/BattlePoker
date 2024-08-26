@@ -32,12 +32,12 @@ const plyr = "<i class='fas fa-user'></i> ";
 const yourDetails = document.querySelector("[data-player='0']");
 const messageElement = document.getElementById("message");
 let communityCards = [];
+/*If there is money in localstorage it keeps but reset if it is not*/
 let thePot = 0;
-let playerMoney = 500;/*DOES NOT RESET AT DEAL*/
-if (localStorage.getItem("balance") && Number(localStorage.getItem("balance"))) {
-    playerMoney = Number(localStorage.getItem("balance"));
-}
+let playerMoney = localStorage.getItem('balance') ? parseInt(localStorage.getItem('balance')) : 500; 
+
 document.querySelector("#playerMoney").innerHTML = playerMoney;
+
 let bet = 0;
 let gameIncrement = 1;
 let updatedBets = false;
@@ -54,6 +54,53 @@ function setPlayerMoney(winLoseBet) {
     localStorage.setItem("balance", playerMoney);
     return false;
 }
+
+// Not negative balance, no debts for the player unless he accepts to restart again
+function resetPlayerMoney() {
+    if (playerMoney <= 0) {
+        // Tell player he is out
+        const confirmation = confirm("You are broken so I guess you didn't do the math, do you want to start again?");
+
+        if (confirmation) {
+            // Once confirmed restart
+            playerMoney = 500;
+            localStorage.setItem('balance', playerMoney);
+            document.querySelector("#playerMoney").innerHTML = playerMoney;
+            alert("Your Balance is again $500. ¡This time Do The Math!");
+        } else {
+            // Disable the game unless get player confirmation
+            alert("The game is disabled, please refresh the page to start again.");
+            disableGame(); 
+        }
+    }
+}
+
+function disableGame() {
+    const buttonsToDisable = [
+        "[data-round='match']",
+        "[data-round='raise']",
+        "[data-round='check']",
+        "[data-round='max']",
+        "#foldBt",
+        "button[title='Deal']"
+    ];
+    buttonsToDisable.forEach(selector => {
+        const buttons = document.querySelectorAll(selector);
+        buttons.forEach(button => {
+            button.disabled = true;
+            button.classList.add('disabled'); 
+
+            // Eliminate previous events
+            button.onclick = (event) => {
+                event.preventDefault(); 
+                event.stopPropagation();
+                return false;
+            };
+        });
+    });
+    document.getElementById("betTarget").innerHTML = "The game is disabled, please refresh the page to start again.";
+}
+
 
 function showPlayersCards() {
     for (let i = 0; i < 4; i++) {
@@ -802,6 +849,7 @@ function match(checked, betMultiplier) {
 }
 
 function deal() {
+    resetPlayerMoney();
     for (let i = 0; i < playerIds.length; i++) {
         document.getElementById(playerIds[i]).innerHTML = ""
     }
