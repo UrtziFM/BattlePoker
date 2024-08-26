@@ -46,6 +46,7 @@ let bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
 let bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
 let bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
 let monetaryVal = [null, 10, bet1, bet2, bet3];
+let hasRaised = false;
 
 function setPlayerMoney(winLoseBet) {
     document.getElementById("betTarget").innerHTML = "Bet $" + bet;
@@ -767,23 +768,26 @@ function evaluateHand(iteration, gameStep) {
 }
 
 function match(checked, betMultiplier) {
+    // Si el multiplicador es 2 o 3, significa que alguien ha subido la apuesta
     if (betMultiplier === 3 || betMultiplier === 2) {
         maxBetHit = true;
+        hasRaised = true; // Marcamos que se ha subido la apuesta
     }
-    document.querySelector("[data-round='match']").disabled = true;
-    document.querySelector("[data-round='check']").disabled = true;
+
+    // Deshabilitar los botones según la lógica del juego
+    document.querySelector("[data-round='check']").disabled = hasRaised;
     document.querySelector("[data-round='match']").disabled = false;
     document.querySelector("[data-round='max']").disabled = false;
-    window.location = "#";
-    gameIncrement = gameIncrement + 1;
+
+    // Avanzar al siguiente paso del juego
+    gameIncrement++;
     let gameStep = gameIncrement;
-    let maxLength = 4;
-    if (gameStep === 4) {
-        maxLength = 5;
-    }
+    let maxLength = gameStep < 4 ? gameStep + 1 : 5;
+
     document.getElementById("communityCardDetails").classList.remove("hide");
-    if (checked === false) {
-        /*START BLUFFING ARRAY*/
+
+    if (!checked) {
+        // Generación de apuestas para los jugadores que suben la apuesta
         const bluffList = [
             Math.floor(Math.random() * (100 - 10) + 10),
             Math.floor(Math.random() * (100 - 50) + 50),
@@ -793,7 +797,7 @@ function match(checked, betMultiplier) {
             Math.floor(Math.random() * (300 - 250) + 250),
         ];
 
-        if (dblBets === true || bluffList.indexOf(bet1) !== -1 || bluffList.indexOf(bet2) !== -1 || bluffList.indexOf(bet3) !== -1 && updatedBets === false) {
+        if (dblBets === true || bluffList.includes(bet1) || bluffList.includes(bet2) || bluffList.includes(bet3) && !updatedBets) {
             maxBet = [400, 500, 900];
             bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
             bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
@@ -801,53 +805,41 @@ function match(checked, betMultiplier) {
             monetaryVal = [null, 10, bet1, bet2, bet3];
             updatedBets = true;
         }
-        if (gameStep === 2) {
-            thePot = thePot + (monetaryVal[gameStep] * activePlayers.length);
-            bet = bet + (monetaryVal[gameStep] * betMultiplier);
-            playerMoney = playerMoney - monetaryVal[gameStep];
-            setPlayerMoney("betting");
-            document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
-            document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep + 1] * 3);
-        }
-        if (gameStep === 3) {
-            thePot = thePot + (monetaryVal[gameStep] * activePlayers.length);
-            bet = bet + (monetaryVal[gameStep] * betMultiplier);
-            playerMoney = playerMoney - monetaryVal[gameStep];
-            setPlayerMoney("betting");
-            document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
-            document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep + 1] * 3);
-        }
-        if (gameStep === 4) {
-            thePot = thePot + (monetaryVal[gameStep] * activePlayers.length);
-            bet = bet + (monetaryVal[gameStep] * betMultiplier);
-            playerMoney = playerMoney - monetaryVal[gameStep];
-            setPlayerMoney("betting");
-            document.getElementById("foldBt").classList.add("hide");
-            document.querySelector("[data-round='max']").classList.add("hide");
-            document.querySelector("[data-round='match']").classList.add("hide");
-            document.querySelector("[data-round='check']").classList.add("hide");
-            document.querySelector("[data-round='raise']").classList.add("hide");
-        }
+
+        // Actualización de la apuesta y del pozo
+        thePot += monetaryVal[gameStep] * activePlayers.length;
+        bet += monetaryVal[gameStep] * betMultiplier;
+        playerMoney -= monetaryVal[gameStep];
+        setPlayerMoney("betting");
+
+        // Actualización de los textos de los botones
+        document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
+        document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep + 1] * 3);
     } else {
+        // Si se hace un check y no ha habido subida de apuestas
         document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
         document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep] * betMultiplier);
     }
+
+    // Actualización del balance del jugador y del objetivo de apuesta
     document.getElementById("playerMoney").innerHTML = playerMoney;
     document.getElementById("betTarget").innerHTML = "Bet $" + bet;
-    if (gameStep === 2) {/*the flop*/
+
+    // Construcción de las cartas comunitarias basadas en la etapa del juego
+    if (gameStep === 2) { /* the flop */
         communityCards = [];
         document.getElementById("communityCardDetails").classList.remove("hide");
         buildCommunityCards(3, gameStep);
     } else {
         buildCommunityCards(maxLength, gameStep);
     }
+
+    // Evaluación de las manos de los jugadores
     let evaled = [];
     for (let i = 0; i < activePlayers.length; i++) {
-        if (evaled.indexOf(activePlayers[i]) === -1) {
-            if (activePlayers[i] !== undefined) {
-                evaluateHand(activePlayers[i], gameStep);
-                evaled.push(activePlayers[i]);
-            }
+        if (!evaled.includes(activePlayers[i]) && activePlayers[i] !== undefined) {
+            evaluateHand(activePlayers[i], gameStep);
+            evaled.push(activePlayers[i]);
         }
     }
 }
