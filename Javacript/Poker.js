@@ -901,12 +901,22 @@ function deal() {
     document.querySelector("[data-round='max']").innerHTML = "Max $" + monetaryVal[2] * 3;
     clear("deal");
     countingIterations = 0;
+    
     document.getElementById("foldBt").classList.remove("hide");
+    document.getElementById("foldBt").disabled = false;
+
     document.querySelector("[data-round='max']").classList.remove("hide");
-    document.querySelector("[data-round='match']").classList.remove("hide");
+    document.querySelector("[data-round='max']").disabled = false;
+
     document.querySelector("[data-round='raise']").classList.remove("hide");
+    document.querySelector("[data-round='raise']").disabled = false;
+
+    document.querySelector("[data-round='check']").classList.remove("hide");
+    document.querySelector("[data-round='check']").disabled = false;
+
     document.querySelector("button[title='Deal']").disabled = true;
     document.querySelector("button[title='Deal']").classList.add("hide");
+
     cards = JSON.parse(localStorage.getItem("completeCards"));
 
     function generatePlayer(iteration) {
