@@ -98,7 +98,7 @@ function disableGame() {
             };
         });
     });
-    document.getElementById("betTarget").innerHTML = "The game is disabled because you didn't Do The Math, please refresh the page to start again.";
+    document.getElementById("betTarget").innerHTML = "The game is disabled";
 }
 
 
