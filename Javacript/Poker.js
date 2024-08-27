@@ -874,25 +874,25 @@ function deal() {
         generatePlayer(i);
     }
 
-    // Evaluar si deshabilitar el botón "check" al inicio de la ronda
+    // Evaluate if any player is betting in the open
     let shouldDisableCheck = false;
     activePlayers.forEach(player => {
-        if (player !== 0) { // Omitir al jugador principal
+        if (player !== 0) { // skip principal player
             const playerStatus = document.querySelector(`[data-player='${player}']`).dataset.status;
-            if (playerStatus === 'betting') { // Si el jugador ha apostado
-                shouldDisableCheck = true; // Deshabilitar "check"
+            if (playerStatus === 'betting') { //
+                shouldDisableCheck = true; // 
             }
         }
     });
 
-    hasRaised = shouldDisableCheck; // Actualizar la bandera global
+    hasRaised = shouldDisableCheck; 
     document.querySelector("[data-round='check']").disabled = hasRaised;
 
     return false;
 }
 
 function match(checked, betMultiplier) {
-    // Avanzar al siguiente paso del juego
+    
     gameIncrement++;
     let gameStep = gameIncrement;
     let maxLength = gameStep < 4 ? gameStep + 1 : 5;
