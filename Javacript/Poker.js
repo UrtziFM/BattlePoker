@@ -744,6 +744,7 @@ function evaluateHand(iteration, gameStep) {
             }
         }
         if (gameStep === 4 && iteration === lastIteration) {
+            document.getElementById("foldBt").disabled = true;
             messageElement.classList.remove("hide");
             if (topHand === 0) {
                 youWin("default");
