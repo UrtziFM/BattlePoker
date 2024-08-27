@@ -767,12 +767,138 @@ function evaluateHand(iteration, gameStep) {
     }
 }
 
+function deal() {
+    resetPlayerMoney();
+    hasRaised = false; 
+
+    for (let i = 0; i < playerIds.length; i++) {
+        document.getElementById(playerIds[i]).innerHTML = "";
+    }
+
+    communityCardsHTML = "";
+    maxBet = [100, 200, 300]; 
+    bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
+    bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
+    bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
+    monetaryVal = [null, 10, bet1, bet2, bet3];
+    updatedBets = false;
+    maxBetHit = false;
+    dblBets = false;
+    plyr1Pair = [];
+    plyr2Pair = [];
+    plyr3Pair = [];
+    plyr4Pair = [];
+    usedCardsArr = [];
+    playedTimes = playedTimes + 1;
+    gameIncrement = 1;
+    communityCards = [];
+    resultList = [0, 0, 0, 0];
+    compareCards = [0, 0, 0, 0];
+    activePlayers = [0, 1, 2, 3];
+    playerHighCards = [0, 0, 0, 0];
+    playerStraightHighCard = [0, 0, 0, 0];
+    bestHoleCards = [];
+    topHand = null;
+    document.getElementById("communityCards").innerHTML = "";
+    document.getElementById("communityCardDetails").classList.add("hide");
+
+    // Evaluar si deshabilitar el botón "check" al inicio de la ronda
+    let shouldDisableCheck = false;
+    activePlayers.forEach(player => {
+        if (player !== 0 && Math.random() < 0.5) { // Simular que un jugador ha subido la apuesta (puedes ajustar esta lógica)
+            shouldDisableCheck = true;
+        }
+    });
+
+    hasRaised = shouldDisableCheck; // Actualizar la bandera global
+    document.querySelector("[data-round='check']").disabled = hasRaised;
+
+    [].forEach.call(document.querySelectorAll(".alert[data-player]"), function (e) {
+        e.classList.remove("alert-danger");
+        e.classList.add("alert-info");
+        e.classList.remove("hide");
+        e.classList.remove("alert-success");
+        e.dataset.status = "ready";
+    });
+
+    document.getElementById("status").classList.add("hide");
+    document.getElementById("notification").classList.remove("alert-success");
+    document.getElementById("notification").classList.remove("alert-danger");
+    document.getElementById("notification").classList.add("alert-info");
+    document.getElementById("message").innerHTML = "";
+    thePot = 40;
+    bet = monetaryVal[1];
+    playerMoney = playerMoney - bet;
+    setPlayerMoney("betting");
+    document.getElementById("betTarget").innerHTML = "Bet $" + monetaryVal[1];
+    document.querySelector("#playerMoney").innerHTML = playerMoney;
+    document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[2];
+    document.querySelector("[data-round='max']").innerHTML = "Max $" + monetaryVal[2] * 3;
+    clear("deal");
+    countingIterations = 0;
+
+    document.getElementById("foldBt").classList.remove("hide");
+    document.getElementById("foldBt").disabled = false;
+
+    document.querySelector("[data-round='max']").classList.remove("hide");
+    document.querySelector("[data-round='max']").disabled = false;
+
+    document.querySelector("[data-round='raise']").classList.remove("hide");
+    document.querySelector("[data-round='raise']").disabled = false;
+
+    document.querySelector("[data-round='check']").classList.remove("hide");
+    document.querySelector("[data-round='check']").disabled = hasRaised; 
+
+    document.querySelector("button[title='Deal']").disabled = true;
+    document.querySelector("button[title='Deal']").classList.add("hide");
+
+    cards = JSON.parse(localStorage.getItem("completeCards"));
+
+    function generatePlayer(iteration) {
+        cardsInvolved = "";
+        let playersCards = [];
+        let playerCardsHTML = "";
+        while (playersCards.length < 2) {
+            let genNumber = generate(activeCards);
+            if (usedCardsArr.indexOf(activeCards[genNumber].title) === -1) {
+                if (iteration === 0) {
+                    playerCardsHTML = playerCardsHTML + `<div class='card ${activeCards[genNumber].title}' ></div>`;
+                } else {
+                    playerCardsHTML = playerCardsHTML + `<div class='card hiddenDealerCard desktopOnly' ></div>`;
+                }
+                playersCards.push(cards[genNumber].title);
+                usedCardsArr.push(cards[genNumber].title);
+            }
+        }
+        let handObj = [];
+        let score = 0;
+        for (let i = 0; i < playersCards.length; i++) {
+            handObj.push({
+                suit: playersCards[i].substring(playersCards[i].indexOf("-") + 1, playersCards[i].length),
+                value: playersCards[i].substring(0, playersCards[i].indexOf("-"))
+            });
+            score = score + cardHeirarchy.indexOf(playersCards[i].substring(0, playersCards[i].indexOf("-")));
+        }
+        document.getElementById(playerIds[iteration]).innerHTML = playerCardsHTML;
+        playersHands[iteration] = handObj;
+        evaluateHand(iteration, 1);
+        return false;
+    }
+
+    for (let i = 0; i < 4; i++) {
+        generatePlayer(i);
+    }
+
+    return false;
+}
+
 function match(checked, betMultiplier) {
     if (betMultiplier >= 2) {
         maxBetHit = true;
         hasRaised = true;
     }
 
+    // Deshabilitar el botón "check" si se ha subido la apuesta
     document.querySelector("[data-round='check']").disabled = hasRaised;
 
     gameIncrement++;
@@ -831,115 +957,8 @@ function match(checked, betMultiplier) {
         }
     }
 
+    // Verificar si hay una subida en esta iteración para deshabilitar el botón "check"
     if (hasRaised) {
         document.querySelector("[data-round='check']").disabled = true;
     }
-}
-
-function deal() {
-    resetPlayerMoney();
-    hasRaised = false;
-    for (let i = 0; i < playerIds.length; i++) {
-        document.getElementById(playerIds[i]).innerHTML = ""
-    }
-    communityCardsHTML = "";
-    maxBet = [100, 200, 300];/*start random bet */
-    bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
-    bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
-    bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
-    monetaryVal = [null, 10, bet1, bet2, bet3];
-    updatedBets = false;
-    maxBetHit = false;
-    dblBets = false;
-    plyr1Pair = [];
-    plyr2Pair = [];
-    plyr3Pair = [];
-    plyr4Pair = [];
-    usedCardsArr = [];
-    playedTimes = playedTimes + 1;
-    gameIncrement = 1;
-    communityCards = [];
-    resultList = [0, 0, 0, 0];
-    compareCards = [0, 0, 0, 0];
-    activePlayers = [0, 1, 2, 3];
-    playerHighCards = [0, 0, 0, 0];
-    playerStraightHighCard = [0, 0, 0, 0];
-    bestHoleCards = [];
-    topHand = null;
-    document.getElementById("communityCards").innerHTML = "";
-    document.getElementById("communityCardDetails").classList.add("hide");
-    [].forEach.call(document.querySelectorAll(".alert[data-player]"), function (e) {
-        e.classList.remove("alert-danger");
-        e.classList.add("alert-info");
-        e.classList.remove("hide");
-        e.classList.remove("alert-success");
-        e.dataset.status = "ready";
-    });
-    document.getElementById("status").classList.add("hide");
-    document.getElementById("notification").classList.remove("alert-success");
-    document.getElementById("notification").classList.remove("alert-danger");
-    document.getElementById("notification").classList.add("alert-info");
-    document.getElementById("message").innerHTML = "";
-    thePot = 40;
-    bet = monetaryVal[1];
-    playerMoney = playerMoney - bet;
-    setPlayerMoney("betting");
-    document.getElementById("betTarget").innerHTML = "Bet $" + monetaryVal[1];
-    document.querySelector("#playerMoney").innerHTML = playerMoney;
-    document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[2];
-    document.querySelector("[data-round='max']").innerHTML = "Max $" + monetaryVal[2] * 3;
-    clear("deal");
-    countingIterations = 0;
-
-    document.getElementById("foldBt").classList.remove("hide");
-    document.getElementById("foldBt").disabled = false;
-
-    document.querySelector("[data-round='max']").classList.remove("hide");
-    document.querySelector("[data-round='max']").disabled = false;
-
-    document.querySelector("[data-round='raise']").classList.remove("hide");
-    document.querySelector("[data-round='raise']").disabled = false;
-
-    document.querySelector("[data-round='check']").classList.remove("hide");
-    document.querySelector("[data-round='check']").disabled = false;
-
-    document.querySelector("button[title='Deal']").disabled = true;
-    document.querySelector("button[title='Deal']").classList.add("hide");
-
-    cards = JSON.parse(localStorage.getItem("completeCards"));
-
-    function generatePlayer(iteration) {
-        cardsInvolved = "";
-        let playersCards = [];
-        let playerCardsHTML = "";
-        while (playersCards.length < 2) {
-            let genNumber = generate(activeCards);
-            if (usedCardsArr.indexOf(activeCards[genNumber].title) === -1) {
-                if (iteration === 0) {
-                    playerCardsHTML = playerCardsHTML + `<div class='card ${activeCards[genNumber].title}' ></div>`;
-                } else {
-                    playerCardsHTML = playerCardsHTML + `<div class='card hiddenDealerCard desktopOnly' ></div>`;
-                }
-                playersCards.push(cards[genNumber].title);
-                usedCardsArr.push(cards[genNumber].title);
-            }
-        }
-        let handObj = [];
-        let score = 0;
-        for (let i = 0; i < playersCards.length; i++) {
-            handObj.push({
-                suit: playersCards[i].substring(playersCards[i].indexOf("-") + 1, playersCards[i].length),
-                value: playersCards[i].substring(0, playersCards[i].indexOf("-"))
-            });
-            score = score + cardHeirarchy.indexOf(playersCards[i].substring(0, playersCards[i].indexOf("-")));
-        }
-        document.getElementById(playerIds[iteration]).innerHTML = playerCardsHTML;
-        playersHands[iteration] = handObj;
-        evaluateHand(iteration, 1);
-        return false;
-    }
-    for (let i = 0; i < 4; i++) {
-        generatePlayer(i);
-    }
-    return false;
 }
