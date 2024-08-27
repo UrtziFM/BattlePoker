@@ -892,6 +892,7 @@ function deal() {
     return false;
 }
 
+// Now go to review max, raise and match buttons
 function match(checked, betMultiplier) {
     
     gameIncrement++;
@@ -950,18 +951,18 @@ function match(checked, betMultiplier) {
         }
     }
 
-    // Evaluar si algún jugador ha subido la apuesta para deshabilitar "check"
+    
     let shouldDisableCheck = false;
     activePlayers.forEach(player => {
-        if (player !== 0) { // Omitir al jugador principal
+        if (player !== 0) { 
             const playerStatus = document.querySelector(`[data-player='${player}']`).dataset.status;
-            if (playerStatus === 'betting') { // Si el jugador ha apostado
-                shouldDisableCheck = true; // Deshabilitar "check"
+            if (playerStatus === 'betting') { 
+                shouldDisableCheck = true; 
             }
         }
     });
 
-    hasRaised = shouldDisableCheck; // Actualizar la bandera global
+    hasRaised = shouldDisableCheck; 
     document.querySelector("[data-round='check']").disabled = hasRaised;
 
     if (hasRaised) {
