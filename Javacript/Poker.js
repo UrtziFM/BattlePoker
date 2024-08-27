@@ -769,14 +769,12 @@ function evaluateHand(iteration, gameStep) {
 
 function deal() {
     resetPlayerMoney();
-    hasRaised = false; 
-
+    hasRaised = false;
     for (let i = 0; i < playerIds.length; i++) {
-        document.getElementById(playerIds[i]).innerHTML = "";
+        document.getElementById(playerIds[i]).innerHTML = ""
     }
-
     communityCardsHTML = "";
-    maxBet = [100, 200, 300]; 
+    maxBet = [100, 200, 300];/*start random bet */
     bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
     bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
     bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
@@ -801,18 +799,6 @@ function deal() {
     topHand = null;
     document.getElementById("communityCards").innerHTML = "";
     document.getElementById("communityCardDetails").classList.add("hide");
-
-    // Evaluar si deshabilitar el botón "check" al inicio de la ronda
-    let shouldDisableCheck = false;
-    activePlayers.forEach(player => {
-        if (player !== 0 && Math.random() < 0.5) { // Simular que un jugador ha subido la apuesta (puedes ajustar esta lógica)
-            shouldDisableCheck = true;
-        }
-    });
-
-    hasRaised = shouldDisableCheck; // Actualizar la bandera global
-    document.querySelector("[data-round='check']").disabled = hasRaised;
-
     [].forEach.call(document.querySelectorAll(".alert[data-player]"), function (e) {
         e.classList.remove("alert-danger");
         e.classList.add("alert-info");
@@ -820,7 +806,6 @@ function deal() {
         e.classList.remove("alert-success");
         e.dataset.status = "ready";
     });
-
     document.getElementById("status").classList.add("hide");
     document.getElementById("notification").classList.remove("alert-success");
     document.getElementById("notification").classList.remove("alert-danger");
@@ -847,7 +832,7 @@ function deal() {
     document.querySelector("[data-round='raise']").disabled = false;
 
     document.querySelector("[data-round='check']").classList.remove("hide");
-    document.querySelector("[data-round='check']").disabled = hasRaised; 
+    document.querySelector("[data-round='check']").disabled = false;
 
     document.querySelector("button[title='Deal']").disabled = true;
     document.querySelector("button[title='Deal']").classList.add("hide");
@@ -889,18 +874,25 @@ function deal() {
         generatePlayer(i);
     }
 
+    // Evaluar si deshabilitar el botón "check" al inicio de la ronda
+    let shouldDisableCheck = false;
+    activePlayers.forEach(player => {
+        if (player !== 0) { // Omitir al jugador principal
+            const playerStatus = document.querySelector(`[data-player='${player}']`).dataset.status;
+            if (playerStatus === 'betting') { // Si el jugador ha apostado
+                shouldDisableCheck = true; // Deshabilitar "check"
+            }
+        }
+    });
+
+    hasRaised = shouldDisableCheck; // Actualizar la bandera global
+    document.querySelector("[data-round='check']").disabled = hasRaised;
+
     return false;
 }
 
 function match(checked, betMultiplier) {
-    if (betMultiplier >= 2) {
-        maxBetHit = true;
-        hasRaised = true;
-    }
-
-    // Deshabilitar el botón "check" si se ha subido la apuesta
-    document.querySelector("[data-round='check']").disabled = hasRaised;
-
+    // Avanzar al siguiente paso del juego
     gameIncrement++;
     let gameStep = gameIncrement;
     let maxLength = gameStep < 4 ? gameStep + 1 : 5;
@@ -957,8 +949,22 @@ function match(checked, betMultiplier) {
         }
     }
 
-    // Verificar si hay una subida en esta iteración para deshabilitar el botón "check"
+    // Evaluar si algún jugador ha subido la apuesta para deshabilitar "check"
+    let shouldDisableCheck = false;
+    activePlayers.forEach(player => {
+        if (player !== 0) { // Omitir al jugador principal
+            const playerStatus = document.querySelector(`[data-player='${player}']`).dataset.status;
+            if (playerStatus === 'betting') { // Si el jugador ha apostado
+                shouldDisableCheck = true; // Deshabilitar "check"
+            }
+        }
+    });
+
+    hasRaised = shouldDisableCheck; // Actualizar la bandera global
+    document.querySelector("[data-round='check']").disabled = hasRaised;
+
     if (hasRaised) {
         document.querySelector("[data-round='check']").disabled = true;
     }
 }
+
