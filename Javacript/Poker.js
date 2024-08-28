@@ -35,7 +35,9 @@ const messageElement = document.getElementById("message");
 let communityCards = [];
 /*If there is money in localstorage it keeps but reset if it is not*/
 let thePot = 0;
-let playerMoney = localStorage.getItem('balance') ? parseInt(localStorage.getItem('balance')) : 500; 
+let playerMoney = localStorage.getItem('balance');
+playerMoney = playerMoney ? parseInt(playerMoney) : 500;
+
 
 document.querySelector("#playerMoney").innerHTML = playerMoney;
 
@@ -49,6 +51,7 @@ let bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
 let monetaryVal = [null, 10, bet1, bet2, bet3];
 
 function setPlayerMoney(winLoseBet) {
+    playerMoney = isNaN(playerMoney) ? 500 : playerMoney;
     document.getElementById("betTarget").innerHTML = "Bet $" + bet;
     document.getElementById("playerMoney").innerHTML = playerMoney;
     document.querySelector("#playerMoney").innerHTML = playerMoney;/*SAFARI BUG NEEDS BOTH*/
@@ -967,6 +970,13 @@ function match(checked, betMultiplier) {
 
     if (hasRaised) {
         document.querySelector("[data-round='check']").disabled = true;
+    }
+    
+    if (gameStep >= 4) { // Suponiendo que 4 es el último gameStep
+        document.querySelector("[data-round='max']").disabled = true;
+        document.querySelector("[data-round='raise']").disabled = true;
+        document.querySelector("[data-round='match']").disabled = true;
+        document.getElementById("foldBt").disabled = true; // Deshabilitar botón fold también
     }
 }
 
