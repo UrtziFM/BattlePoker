@@ -880,8 +880,7 @@ function deal() {
     setPlayerMoney("betting");
     document.getElementById("betTarget").innerHTML = "Bet $" + monetaryVal[1];
     document.querySelector("#playerMoney").innerHTML = playerMoney;
-    document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[2];
-    document.querySelector("[data-round='max']").innerHTML = "Max $" + monetaryVal[2] * 3;
+
     clear("deal");
     countingIterations = 0;
 
@@ -899,7 +898,7 @@ function deal() {
 
     document.querySelector("button[title='Deal']").disabled = true;
     document.querySelector("button[title='Deal']").classList.add("hide");
-
+    
     cards = JSON.parse(localStorage.getItem("completeCards"));
 
     // Función para generar cartas para cada jugador
@@ -920,13 +919,11 @@ function deal() {
             }
         }
         let handObj = [];
-        let score = 0;
         for (let i = 0; i < playersCards.length; i++) {
             handObj.push({
                 suit: playersCards[i].substring(playersCards[i].indexOf("-") + 1, playersCards[i].length),
                 value: playersCards[i].substring(0, playersCards[i].indexOf("-"))
             });
-            score += cardHeirarchy.indexOf(playersCards[i].substring(0, playersCards[i].indexOf("-")));
         }
         document.getElementById(playerIds[iteration]).innerHTML = playerCardsHTML;
         playersHands[iteration] = handObj;
@@ -943,22 +940,38 @@ function deal() {
     }
 
     // Simular apuestas iniciales basadas en la fuerza de la mano
+    let maxPlayerBet = 10; // Apuesta inicial mínima
+
     for (let i = 1; i <= 3; i++) { // Jugadores 2, 3, y 4
         const score = playerScores[i];
         const betDecision = Math.random(); // Factor aleatorio para mayor realismo
+        let playerBet = 10; // Apuesta inicial para cada jugador
 
         if (score >= 8 || betDecision > 0.8) { // Buena mano o decisión agresiva
+            playerBet = bet2; // Ejemplo de apuesta más alta
             document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
-            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${monetaryVal[1]}`;
+            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${playerBet}`;
         } else if (score >= 4 || betDecision > 0.5) { // Mano moderada o decisión moderada
+            playerBet = 10; // Apuesta baja
             document.querySelector(`[data-player='${i}']`).dataset.status = "checking";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} checks`;
         } else { // Mano débil o decisión conservadora
+            playerBet = 0; // No apuesta
             document.querySelector(`[data-player='${i}']`).dataset.status = "folded";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} folds`;
             removeActivePlyr(i);
         }
+
+        // Actualizar la apuesta máxima si el jugador actual apuesta más
+        if (playerBet > maxPlayerBet) {
+            maxPlayerBet = playerBet;
+        }
     }
+
+    // Configurar los botones según las apuestas calculadas
+    document.querySelector("[data-round='match']").innerHTML = `Min bet $${maxPlayerBet}`;
+    document.querySelector("[data-round='raise']").innerHTML = `Raise to $${Math.ceil(maxPlayerBet * 1.25)}`; // Raise al 25% sobre la apuesta máxima
+    document.querySelector("[data-round='max']").innerHTML = `All In $${playerMoney}`; // All-in con todo el dinero disponible
 
     // Evaluar si hay un ganador al inicio de la ronda
     if (activePlayers.length === 1) { 
@@ -973,6 +986,7 @@ function deal() {
 
     return false;
 }
+
 
 function match(checked, betMultiplier) {
     gameIncrement++;
@@ -1062,5 +1076,3 @@ function match(checked, betMultiplier) {
         endGame();
     }
 }
-
-
