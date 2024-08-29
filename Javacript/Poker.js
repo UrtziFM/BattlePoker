@@ -1134,13 +1134,13 @@ function match(checked, betMultiplier) {
     const maxButton = document.querySelector("[data-round='max']");
 
     if (matchButton) {
-        matchButton.innerHTML = `Match $${maxPlayerBet}`;
+        matchButton.innerHTML = `Min Bet $${maxPlayerBet}`;
     }
     if (raiseButton) {
-        raiseButton.innerHTML = `Raise $${Math.ceil(maxPlayerBet * 1.25)}`;
+        raiseButton.innerHTML = `Raise to $${Math.ceil(maxPlayerBet * 1.25)}`;
     }
     if (maxButton) {
-        maxButton.innerHTML = `Max $${playerMoney}`;
+        maxButton.innerHTML = `All In $${playerMoney}`;
     }
 
     // Evaluar si hay un ganador o todos menos uno se han retirado
