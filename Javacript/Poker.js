@@ -806,6 +806,15 @@ function calculateHandStrength(hand) {
     return 0; // Carta alta
 }
 
+// Función para finalizar el juego
+function endGame() {
+    // Deshabilitar todos los botones
+    document.querySelector("[data-round='max']").disabled = true;
+    document.querySelector("[data-round='raise']").disabled = true;
+    document.querySelector("[data-round='match']").disabled = true;
+    document.querySelector("[data-round='check']").disabled = true;
+    document.getElementById("foldBt").disabled = true;
+}
 
 function deal() {
     resetPlayerMoney();
@@ -951,6 +960,12 @@ function deal() {
         }
     }
 
+    // Evaluar si hay un ganador al inicio de la ronda
+    if (activePlayers.length === 1) { 
+        endGame();
+        return false;
+    }
+
     // Evaluar si deshabilitar el botón "check"
     let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
     hasRaised = shouldDisableCheck; 
@@ -1042,15 +1057,10 @@ function match(checked, betMultiplier) {
     hasRaised = shouldDisableCheck; 
     document.querySelector("[data-round='check']").disabled = hasRaised;
 
-    // Deshabilitar botones al final de la partida
-    if (gameStep >= 4) { // Suponiendo que 4 es el último gameStep
-        document.querySelector("[data-round='max']").disabled = true;
-        document.querySelector("[data-round='raise']").disabled = true;
-        document.querySelector("[data-round='match']").disabled = true;
-        document.getElementById("foldBt").disabled = true; // Deshabilitar botón fold también
+    // Comprobar si hay un ganador o todos menos uno se han retirado
+    if (gameStep >= 4 || activePlayers.length === 1) {
+        endGame();
     }
-
-    return false;
 }
 
 
