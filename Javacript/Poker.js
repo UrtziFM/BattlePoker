@@ -969,7 +969,7 @@ function deal() {
     }
 
     // Configurar los botones según las apuestas calculadas
-    document.querySelector("[data-round='match']").innerHTML = `Min bet $${maxPlayerBet}`;
+    document.querySelector("[data-round='match']").innerHTML = `Min Bet $${maxPlayerBet}`;
     document.querySelector("[data-round='raise']").innerHTML = `Raise to $${Math.ceil(maxPlayerBet * 1.25)}`; // Raise al 25% sobre la apuesta máxima
     document.querySelector("[data-round='max']").innerHTML = `All In $${playerMoney}`; // All-in con todo el dinero disponible
 
