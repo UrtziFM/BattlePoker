@@ -771,17 +771,67 @@ function evaluateHand(iteration, gameStep) {
     }
 }
 
+function calculateHandStrength(hand) {
+    // Mapea las cartas para su evaluación
+    const values = hand.map(card => cardHeirarchy.indexOf(card.value));
+    const suits = hand.map(card => card.suit);
+
+    // Cuenta las ocurrencias de cada valor
+    const valueCounts = {};
+    values.forEach(value => {
+        valueCounts[value] = (valueCounts[value] || 0) + 1;
+    });
+
+    // Determina el número máximo de cartas iguales
+    const counts = Object.values(valueCounts);
+    const maxCount = Math.max(...counts);
+
+    // Verifica si hay una secuencia (escalera)
+    const isStraight = values
+        .sort((a, b) => a - b)
+        .every((val, index, arr) => index === 0 || val === arr[index - 1] + 1);
+
+    // Verifica si todas las cartas son del mismo palo (color)
+    const isFlush = suits.every(suit => suit === suits[0]);
+
+    // Evalúa la fuerza de la mano
+    if (isStraight && isFlush) return 8; // Escalera de color
+    if (maxCount === 4) return 7; // Póker
+    if (maxCount === 3 && counts.includes(2)) return 6; // Full
+    if (isFlush) return 5; // Color
+    if (isStraight) return 4; // Escalera
+    if (maxCount === 3) return 3; // Trío
+    if (counts.filter(count => count === 2).length === 2) return 2; // Doble pareja
+    if (maxCount === 2) return 1; // Pareja
+    return 0; // Carta alta
+}
+
+
 function deal() {
     resetPlayerMoney();
     hasRaised = false;
+
+    // Limpieza inicial de la interfaz de usuario y variables
     for (let i = 0; i < playerIds.length; i++) {
-        document.getElementById(playerIds[i]).innerHTML = ""
+        document.getElementById(playerIds[i]).innerHTML = "";
     }
+
     communityCardsHTML = "";
-    maxBet = [100, 200, 300];/*start random bet */
-    bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
+
+    // Definición de apuestas máximas dinámicas basadas en el número de manos jugadas
+    let baseBet = 50; // Apuesta base inicial
+    let betIncrement = playedTimes * 10; // Incremento de apuesta basado en el número de manos jugadas
+    maxBet = [
+        baseBet + betIncrement, 
+        baseBet * 2 + betIncrement, 
+        baseBet * 3 + betIncrement
+    ];
+
+    // Cálculo de apuestas dinámicas basadas en los máximos establecidos
+    bet1 = Math.floor(Math.random() * (maxBet[0] - 10 + 1) + 10);
     bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
     bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
+
     monetaryVal = [null, 10, bet1, bet2, bet3];
     updatedBets = false;
     maxBetHit = false;
@@ -791,7 +841,7 @@ function deal() {
     plyr3Pair = [];
     plyr4Pair = [];
     usedCardsArr = [];
-    playedTimes = playedTimes + 1;
+    playedTimes += 1;
     gameIncrement = 1;
     communityCards = [];
     resultList = [0, 0, 0, 0];
@@ -817,7 +867,7 @@ function deal() {
     document.getElementById("message").innerHTML = "";
     thePot = 40;
     bet = monetaryVal[1];
-    playerMoney = playerMoney - bet;
+    playerMoney -= bet;
     setPlayerMoney("betting");
     document.getElementById("betTarget").innerHTML = "Bet $" + monetaryVal[1];
     document.querySelector("#playerMoney").innerHTML = playerMoney;
@@ -843,6 +893,7 @@ function deal() {
 
     cards = JSON.parse(localStorage.getItem("completeCards"));
 
+    // Función para generar cartas para cada jugador
     function generatePlayer(iteration) {
         cardsInvolved = "";
         let playersCards = [];
@@ -851,9 +902,9 @@ function deal() {
             let genNumber = generate(activeCards);
             if (usedCardsArr.indexOf(activeCards[genNumber].title) === -1) {
                 if (iteration === 0) {
-                    playerCardsHTML = playerCardsHTML + `<div class='card ${activeCards[genNumber].title}' ></div>`;
+                    playerCardsHTML += `<div class='card ${activeCards[genNumber].title}' ></div>`;
                 } else {
-                    playerCardsHTML = playerCardsHTML + `<div class='card hiddenDealerCard desktopOnly' ></div>`;
+                    playerCardsHTML += `<div class='card hiddenDealerCard desktopOnly' ></div>`;
                 }
                 playersCards.push(cards[genNumber].title);
                 usedCardsArr.push(cards[genNumber].title);
@@ -866,7 +917,7 @@ function deal() {
                 suit: playersCards[i].substring(playersCards[i].indexOf("-") + 1, playersCards[i].length),
                 value: playersCards[i].substring(0, playersCards[i].indexOf("-"))
             });
-            score = score + cardHeirarchy.indexOf(playersCards[i].substring(0, playersCards[i].indexOf("-")));
+            score += cardHeirarchy.indexOf(playersCards[i].substring(0, playersCards[i].indexOf("-")));
         }
         document.getElementById(playerIds[iteration]).innerHTML = playerCardsHTML;
         playersHands[iteration] = handObj;
@@ -874,26 +925,40 @@ function deal() {
         return false;
     }
 
+    // Generar cartas para cada jugador y calcular la fuerza de la mano
+    let playerScores = [];
     for (let i = 0; i < 4; i++) {
         generatePlayer(i);
+        let playerScore = calculateHandStrength(playersHands[i]);
+        playerScores.push(playerScore);
     }
 
-    // Evaluate if any player is betting in the open
-    let shouldDisableCheck = false;
-    activePlayers.forEach(player => {
-        if (player !== 0) { // skip principal player
-            const playerStatus = document.querySelector(`[data-player='${player}']`).dataset.status;
-            if (playerStatus === 'betting') { //
-                shouldDisableCheck = true; // 
-            }
-        }
-    });
+    // Simular apuestas iniciales basadas en la fuerza de la mano
+    for (let i = 1; i <= 3; i++) { // Jugadores 2, 3, y 4
+        const score = playerScores[i];
+        const betDecision = Math.random(); // Factor aleatorio para mayor realismo
 
+        if (score >= 8 || betDecision > 0.8) { // Buena mano o decisión agresiva
+            document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
+            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${monetaryVal[1]}`;
+        } else if (score >= 4 || betDecision > 0.5) { // Mano moderada o decisión moderada
+            document.querySelector(`[data-player='${i}']`).dataset.status = "checking";
+            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} checks`;
+        } else { // Mano débil o decisión conservadora
+            document.querySelector(`[data-player='${i}']`).dataset.status = "folded";
+            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} folds`;
+            removeActivePlyr(i);
+        }
+    }
+
+    // Evaluar si deshabilitar el botón "check"
+    let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
     hasRaised = shouldDisableCheck; 
     document.querySelector("[data-round='check']").disabled = hasRaised;
 
     return false;
 }
+
 
 // Now go to review max, raise and match buttons
 function match(checked, betMultiplier) {
