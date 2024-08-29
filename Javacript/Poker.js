@@ -1100,33 +1100,50 @@ function match(checked, betMultiplier) {
         }
     }
 
-    // **Evaluación de la lógica de apuestas para los jugadores 2, 3 y 4**
+    // Lógica de apuestas para los jugadores 2, 3 y 4
+    let maxPlayerBet = 10; // Reiniciar la apuesta máxima
     for (let i = 1; i <= 3; i++) { // Jugadores 2, 3 y 4
         if (!activePlayers.includes(i)) continue; // Saltar si el jugador ha hecho fold
 
-        const playerHandStrength = calculateHandStrength(playersHands[i]); // Calcular la fuerza de la mano actual
-        const playerDecisionFactor = Math.random(); // Factor aleatorio para mayor realismo
+        const playerHandStrength = calculateHandStrength(playersHands[i]);
+        const playerDecisionFactor = Math.random();
+        let playerBet = 10;
 
-        // Lógica de decisión de apuesta
-        if (playerHandStrength >= 8 || (playerHandStrength >= 5 && playerDecisionFactor > 0.7)) { // Mano fuerte o jugador agresivo
+        if (playerHandStrength >= 8 || (playerHandStrength >= 5 && playerDecisionFactor > 0.7)) {
+            playerBet = monetaryVal[gameStep];
             document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
-            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${monetaryVal[gameStep]}`;
-        } else if (playerHandStrength >= 4 || (playerHandStrength >= 2 && playerDecisionFactor > 0.4)) { // Mano moderada o jugador cauteloso
+            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${playerBet}`;
+        } else if (playerHandStrength >= 4 || (playerHandStrength >= 2 && playerDecisionFactor > 0.4)) {
             document.querySelector(`[data-player='${i}']`).dataset.status = "checking";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} checks`;
-        } else { // Mano débil o jugador conservador
+        } else {
             document.querySelector(`[data-player='${i}']`).dataset.status = "folded";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} folds`;
             removeActivePlyr(i);
         }
+
+        // Actualizar la apuesta máxima
+        if (playerBet > maxPlayerBet) {
+            maxPlayerBet = playerBet;
+        }
     }
 
-    // Evaluar si se debe deshabilitar el botón "check"
-    let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
-    hasRaised = shouldDisableCheck; 
-    document.querySelector("[data-round='check']").disabled = hasRaised;
+    // Verificar si los elementos existen antes de modificar
+    const matchButton = document.querySelector("[data-round='match']");
+    const raiseButton = document.querySelector("[data-round='raise']");
+    const maxButton = document.querySelector("[data-round='max']");
 
-    // Comprobar si hay un ganador o todos menos uno se han retirado
+    if (matchButton) {
+        matchButton.innerHTML = `Match $${maxPlayerBet}`;
+    }
+    if (raiseButton) {
+        raiseButton.innerHTML = `Raise $${Math.ceil(maxPlayerBet * 1.25)}`;
+    }
+    if (maxButton) {
+        maxButton.innerHTML = `Max $${playerMoney}`;
+    }
+
+    // Evaluar si hay un ganador o todos menos uno se han retirado
     if (gameStep >= 4 || activePlayers.length === 1) {
         endGame();
     }
