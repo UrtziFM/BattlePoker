@@ -245,9 +245,21 @@ function removeActivePlyr(plyrID) {
 
 function evaluateHand(iteration, gameStep) {
     let stepPlayed = false;
-    document.getElementById("communityCardDetails").innerHTML = "The " + gameStepHierarchy[gameStep] + " - Pot: $" + thePot;
-    document.getElementById("raiseAmt").innerHTML = "$" + (monetaryVal[gameIncrement + 1] * 2);
-    document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameIncrement + 1] * 3);
+    const communityCardDetailsElement = document.getElementById("communityCardDetails");
+    if (communityCardDetailsElement) {
+        communityCardDetailsElement.innerHTML = "The " + gameStepHierarchy[gameStep] + " - Pot: $" + thePot;
+    }
+
+    const raiseAmtElement = document.getElementById("raiseAmt");
+    if (raiseAmtElement) {
+        raiseAmtElement.innerHTML = "$" + (monetaryVal[gameIncrement + 1] * 2);
+    }
+
+    const maxButtonElement = document.querySelector("[data-round='max']");
+    if (maxButtonElement) {
+        maxButtonElement.innerHTML = "Max $" + (monetaryVal[gameIncrement + 1] * 3);
+    }
+
     countingIterations = iteration;
     let cardsInvolved = "";
     let cardIndexes = [];
@@ -822,7 +834,10 @@ function deal() {
 
     // Limpieza inicial de la interfaz de usuario y variables
     for (let i = 0; i < playerIds.length; i++) {
-        document.getElementById(playerIds[i]).innerHTML = "";
+        const playerElement = document.getElementById(playerIds[i]);
+        if (playerElement) { // Verificar si el elemento existe
+            playerElement.innerHTML = "";
+        }
     }
 
     communityCardsHTML = "";
@@ -862,30 +877,57 @@ function deal() {
     topHand = null;
     document.getElementById("communityCards").innerHTML = "";
     document.getElementById("communityCardDetails").classList.add("hide");
+
     [].forEach.call(document.querySelectorAll(".alert[data-player]"), function (e) {
-        e.classList.remove("alert-danger");
-        e.classList.add("alert-info");
-        e.classList.remove("hide");
-        e.classList.remove("alert-success");
-        e.dataset.status = "ready";
+        if (e) { // Verificar si el elemento existe
+            e.classList.remove("alert-danger");
+            e.classList.add("alert-info");
+            e.classList.remove("hide");
+            e.classList.remove("alert-success");
+            e.dataset.status = "ready";
+        }
     });
-    document.getElementById("status").classList.add("hide");
-    document.getElementById("notification").classList.remove("alert-success");
-    document.getElementById("notification").classList.remove("alert-danger");
-    document.getElementById("notification").classList.add("alert-info");
-    document.getElementById("message").innerHTML = "";
+
+    const statusElement = document.getElementById("status");
+    if (statusElement) {
+        statusElement.classList.add("hide");
+    }
+
+    const notificationElement = document.getElementById("notification");
+    if (notificationElement) {
+        notificationElement.classList.remove("alert-success");
+        notificationElement.classList.remove("alert-danger");
+        notificationElement.classList.add("alert-info");
+    }
+
+    const messageElement = document.getElementById("message");
+    if (messageElement) {
+        messageElement.innerHTML = "";
+    }
+
     thePot = 40;
     bet = monetaryVal[1];
     playerMoney -= bet;
     setPlayerMoney("betting");
-    document.getElementById("betTarget").innerHTML = "Bet $" + monetaryVal[1];
-    document.querySelector("#playerMoney").innerHTML = playerMoney;
+
+    const betTargetElement = document.getElementById("betTarget");
+    if (betTargetElement) {
+        betTargetElement.innerHTML = "Bet $" + monetaryVal[1];
+    }
+
+    const playerMoneyElement = document.querySelector("#playerMoney");
+    if (playerMoneyElement) {
+        playerMoneyElement.innerHTML = playerMoney;
+    }
 
     clear("deal");
     countingIterations = 0;
 
-    document.getElementById("foldBt").classList.remove("hide");
-    document.getElementById("foldBt").disabled = false;
+    const foldButton = document.getElementById("foldBt");
+    if (foldButton) {
+        foldButton.classList.remove("hide");
+        foldButton.disabled = false;
+    }
 
     document.querySelector("[data-round='max']").classList.remove("hide");
     document.querySelector("[data-round='max']").disabled = false;
@@ -925,7 +967,10 @@ function deal() {
                 value: playersCards[i].substring(0, playersCards[i].indexOf("-"))
             });
         }
-        document.getElementById(playerIds[iteration]).innerHTML = playerCardsHTML;
+        const playerElement = document.getElementById(playerIds[iteration]);
+        if (playerElement) { // Verificar si el elemento existe
+            playerElement.innerHTML = playerCardsHTML;
+        }
         playersHands[iteration] = handObj;
         evaluateHand(iteration, 1);
         return false;
@@ -949,16 +994,25 @@ function deal() {
 
         if (score >= 8 || betDecision > 0.8) { // Buena mano o decisión agresiva
             playerBet = bet2; // Ejemplo de apuesta más alta
-            document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
-            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${playerBet}`;
+            const playerElement = document.querySelector(`[data-player='${i}']`);
+            if (playerElement) {
+                playerElement.dataset.status = "betting";
+                playerElement.innerHTML = `Player ${i + 1} bets $${playerBet}`;
+            }
         } else if (score >= 4 || betDecision > 0.5) { // Mano moderada o decisión moderada
             playerBet = 10; // Apuesta baja
-            document.querySelector(`[data-player='${i}']`).dataset.status = "checking";
-            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} checks`;
+            const playerElement = document.querySelector(`[data-player='${i}']`);
+            if (playerElement) {
+                playerElement.dataset.status = "checking";
+                playerElement.innerHTML = `Player ${i + 1} checks`;
+            }
         } else { // Mano débil o decisión conservadora
             playerBet = 0; // No apuesta
-            document.querySelector(`[data-player='${i}']`).dataset.status = "folded";
-            document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} folds`;
+            const playerElement = document.querySelector(`[data-player='${i}']`);
+            if (playerElement) {
+                playerElement.dataset.status = "folded";
+                playerElement.innerHTML = `Player ${i + 1} folds`;
+            }
             removeActivePlyr(i);
         }
 
@@ -986,6 +1040,7 @@ function deal() {
 
     return false;
 }
+
 
 
 function match(checked, betMultiplier) {
