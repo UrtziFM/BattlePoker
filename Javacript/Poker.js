@@ -1070,8 +1070,10 @@ function match(checked, betMultiplier) {
             updatedBets = true;
         }
 
-        // Calcular el pot total basándose en las apuestas de los jugadores activos
+        // Calcular el pot total incluyendo la apuesta del jugador principal
         let totalBetForActivePlayers = 0;
+
+        // Sumar apuestas de los jugadores activos (incluido el jugador principal)
         activePlayers.forEach(player => {
             if (player !== 0) { // Evitar incluir al jugador principal
                 let playerStatus = document.querySelector(`[data-player='${player}']`).dataset.status;
@@ -1081,9 +1083,12 @@ function match(checked, betMultiplier) {
             }
         });
 
-        thePot += totalBetForActivePlayers; // Actualizar el pot con la suma de las apuestas de los jugadores activos
-        bet += monetaryVal[gameStep] * betMultiplier; // Actualizar la apuesta
-        playerMoney -= monetaryVal[gameStep]; // Restar la apuesta del dinero del jugador principal
+        // Actualizar el pot con la suma de las apuestas de los jugadores activos y del jugador principal
+        thePot += totalBetForActivePlayers + monetaryVal[gameStep];
+        
+        // Actualizar la apuesta y el dinero del jugador principal
+        bet = monetaryVal[gameStep] * betMultiplier; // Actualizar la apuesta del jugador principal
+        playerMoney -= bet; // Restar la apuesta del dinero del jugador principal
         setPlayerMoney("betting");
 
         document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
