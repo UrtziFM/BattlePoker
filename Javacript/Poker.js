@@ -1063,11 +1063,9 @@ function match(checked, betMultiplier) {
                 let playerElement = document.querySelector(`[data-player='${player}']`);
                 if (playerElement && playerElement.dataset.lastMove === "check") {
                     playerElement.dataset.status = "folded";
-                    playerElement.innerHTML = `Player ${player + 1} folds`;
+                    playerElement.innerHTML = `Player ${player + 1} is folded by check`;
                     removeActivePlyr(player);
 
-                    // Aviso por consola
-                    console.log(`Player ${player + 1} did check, but a raise was made by another player. Marking as folded.`);
                 }
             }
         });
