@@ -997,6 +997,7 @@ function deal() {
             const playerElement = document.querySelector(`[data-player='${i}']`);
             if (playerElement) {
                 playerElement.dataset.status = "betting";
+                playerElement.dataset.lastMove = "bet";
                 playerElement.innerHTML = `Player ${i + 1} bets $${playerBet}`;
             }
         } else if (score >= 4 || betDecision > 0.5) { // Mano moderada o decisión moderada
@@ -1004,6 +1005,7 @@ function deal() {
             const playerElement = document.querySelector(`[data-player='${i}']`);
             if (playerElement) {
                 playerElement.dataset.status = "checking";
+                playerElement.dataset.lastMove = "check";
                 playerElement.innerHTML = `Player ${i + 1} checks`;
             }
         } else { // Mano débil o decisión conservadora
@@ -1011,6 +1013,7 @@ function deal() {
             const playerElement = document.querySelector(`[data-player='${i}']`);
             if (playerElement) {
                 playerElement.dataset.status = "folded";
+                playerElement.dataset.lastMove = "fold";
                 playerElement.innerHTML = `Player ${i + 1} folds`;
             }
             removeActivePlyr(i);
@@ -1041,14 +1044,31 @@ function deal() {
     return false;
 }
 
-
-
 function match(checked, betMultiplier) {
     gameIncrement++;
     let gameStep = gameIncrement;
     let maxLength = gameStep < 4 ? gameStep + 1 : 5;
 
     document.getElementById("communityCardDetails").classList.remove("hide");
+
+    // Verificar si hubo una subida de apuesta en la ronda anterior
+    let anyPlayerRaised = activePlayers.some(player => {
+        return player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.lastMove === "bet";
+    });
+
+    // Marcar como "folded" a los jugadores que hicieron "check" si alguien subió la apuesta
+    if (anyPlayerRaised) {
+        activePlayers.forEach(player => {
+            if (player !== 0) {
+                let playerElement = document.querySelector(`[data-player='${player}']`);
+                if (playerElement && playerElement.dataset.lastMove === "check") {
+                    playerElement.dataset.status = "folded";
+                    playerElement.innerHTML = `Player ${player + 1} folds`;
+                    removeActivePlyr(player);
+                }
+            }
+        });
+    }
 
     // Lógica de apuestas si no se ha hecho check
     if (!checked) {
@@ -1155,16 +1175,17 @@ function match(checked, betMultiplier) {
         maxButton.innerHTML = `All In $${playerMoney}`;
     }
 
-     // Evaluar si se debe deshabilitar el botón "check"
-     let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
-     hasRaised = shouldDisableCheck; 
-     document.querySelector("[data-round='check']").disabled = hasRaised;
+    // Evaluar si se debe deshabilitar el botón "check"
+    let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
+    hasRaised = shouldDisableCheck; 
+    document.querySelector("[data-round='check']").disabled = hasRaised;
 
     // Evaluar si hay un ganador o todos menos uno se han retirado
     if (gameStep >= 4 || activePlayers.length === 1) {
         endGame();
     }
 }
+
 
 
 
