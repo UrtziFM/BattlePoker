@@ -1070,10 +1070,9 @@ function match(checked, betMultiplier) {
             updatedBets = true;
         }
 
-        // Calcular el pot total incluyendo la apuesta del jugador principal
+        // Actualizar el pot con la suma de las apuestas de los jugadores activos
         let totalBetForActivePlayers = 0;
 
-        // Sumar apuestas de los jugadores activos (incluido el jugador principal)
         activePlayers.forEach(player => {
             if (player !== 0) { // Evitar incluir al jugador principal
                 let playerStatus = document.querySelector(`[data-player='${player}']`).dataset.status;
@@ -1083,14 +1082,15 @@ function match(checked, betMultiplier) {
             }
         });
 
-        // Actualizar el pot con la suma de las apuestas de los jugadores activos y del jugador principal
-        thePot += totalBetForActivePlayers + monetaryVal[gameStep];
-        
-        // Actualizar la apuesta y el dinero del jugador principal
-        bet = monetaryVal[gameStep] * betMultiplier; // Actualizar la apuesta del jugador principal
-        playerMoney -= bet; // Restar la apuesta del dinero del jugador principal
+        // Actualizar el pot con las apuestas de los jugadores activos
+        thePot += totalBetForActivePlayers;
+
+        // Actualizar la apuesta del jugador principal acumulativamente
+        bet += monetaryVal[gameStep]; // Acumular las apuestas realizadas por el jugador principal
+        playerMoney -= monetaryVal[gameStep]; // Restar la apuesta del dinero del jugador principal
         setPlayerMoney("betting");
 
+        // Actualizar el botón de apuestas
         document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
         document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep + 1] * 3);
     } else {
@@ -1123,6 +1123,11 @@ function match(checked, betMultiplier) {
     let maxPlayerBet = 10; // Reiniciar la apuesta máxima
     for (let i = 1; i <= 3; i++) { // Jugadores 2, 3 y 4
         if (!activePlayers.includes(i)) continue; // Saltar si el jugador ha hecho fold
+
+        if (gameStep >= 4) { // Si es la última iteración antes de mostrar la última carta, no permitir más apuestas
+            document.querySelector(`[data-player='${i}']`).dataset.status = "finished";
+            continue;
+        }
 
         const playerHandStrength = calculateHandStrength(playersHands[i]);
         const playerDecisionFactor = Math.random();
@@ -1167,4 +1172,5 @@ function match(checked, betMultiplier) {
         endGame();
     }
 }
+
 
