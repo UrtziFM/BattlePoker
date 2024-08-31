@@ -1050,7 +1050,7 @@ function match(checked, betMultiplier) {
 
     document.getElementById("communityCardDetails").classList.remove("hide");
 
-    // Reiniciar la lógica de apuestas si no se ha hecho check
+    // Lógica de apuestas si no se ha hecho check
     if (!checked) {
         const bluffList = [
             Math.floor(Math.random() * (100 - 10) + 10),
@@ -1070,38 +1070,26 @@ function match(checked, betMultiplier) {
             updatedBets = true;
         }
 
-        // Actualizar el pot con la suma de las apuestas de los jugadores activos
-        let totalBetForActivePlayers = 0;
-
-        activePlayers.forEach(player => {
-            if (player !== 0) { // Evitar incluir al jugador principal
-                let playerStatus = document.querySelector(`[data-player='${player}']`).dataset.status;
-                if (playerStatus === "betting") {
-                    totalBetForActivePlayers += monetaryVal[gameStep];
-                }
-            }
-        });
-
-        // Actualizar el pot con las apuestas de los jugadores activos
-        thePot += totalBetForActivePlayers;
-
-        // Actualizar la apuesta del jugador principal acumulativamente
-        bet += monetaryVal[gameStep]; // Acumular las apuestas realizadas por el jugador principal
-        playerMoney -= monetaryVal[gameStep]; // Restar la apuesta del dinero del jugador principal
+        // Actualizar la apuesta y el dinero del jugador principal de forma acumulativa
+        let playerBet = monetaryVal[gameStep] * betMultiplier; // Calcular la apuesta para esta iteración
+        bet += playerBet; // Acumular la apuesta total del jugador principal
+        playerMoney -= playerBet; // Restar la apuesta del dinero del jugador principal
         setPlayerMoney("betting");
 
-        // Actualizar el botón de apuestas
+        // Actualizar el campo Bet en pantalla
+        document.getElementById("betTarget").innerHTML = "Bet $" + bet;
         document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
         document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep + 1] * 3);
     } else {
+        // Si se hace check, solo actualizamos el siguiente valor de apuesta en pantalla
         document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
         document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep] * betMultiplier);
     }
 
-    // Actualizar visualización del pot y apuestas
+    // Actualizar visualización del dinero del jugador
     document.getElementById("playerMoney").innerHTML = playerMoney;
-    document.getElementById("betTarget").innerHTML = "Bet $" + bet;
 
+    // Muestra de cartas en la comunidad y otros elementos visuales
     if (gameStep === 2) {
         communityCards = [];
         document.getElementById("communityCardDetails").classList.remove("hide");
@@ -1119,7 +1107,7 @@ function match(checked, betMultiplier) {
         }
     }
 
-    // **Evaluación de la lógica de apuestas para los jugadores 2, 3 y 4**
+    // Lógica de apuestas para los jugadores 2, 3 y 4
     let maxPlayerBet = 10; // Reiniciar la apuesta máxima
     for (let i = 1; i <= 3; i++) { // Jugadores 2, 3 y 4
         if (!activePlayers.includes(i)) continue; // Saltar si el jugador ha hecho fold
@@ -1172,5 +1160,6 @@ function match(checked, betMultiplier) {
         endGame();
     }
 }
+
 
 
