@@ -1065,6 +1065,9 @@ function match(checked, betMultiplier) {
                     playerElement.dataset.status = "folded";
                     playerElement.innerHTML = `Player ${player + 1} folds`;
                     removeActivePlyr(player);
+
+                    // Aviso por consola
+                    console.log(`Player ${player + 1} did check, but a raise was made by another player. Marking as folded.`);
                 }
             }
         });
