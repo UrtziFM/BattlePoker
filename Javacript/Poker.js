@@ -1155,6 +1155,11 @@ function match(checked, betMultiplier) {
         maxButton.innerHTML = `All In $${playerMoney}`;
     }
 
+     // Evaluar si se debe deshabilitar el botón "check"
+     let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
+     hasRaised = shouldDisableCheck; 
+     document.querySelector("[data-round='check']").disabled = hasRaised;
+
     // Evaluar si hay un ganador o todos menos uno se han retirado
     if (gameStep >= 4 || activePlayers.length === 1) {
         endGame();
