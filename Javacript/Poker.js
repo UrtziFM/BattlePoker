@@ -1146,12 +1146,15 @@ function match(checked, betMultiplier) {
             playerBet = monetaryVal[gameStep];
             document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${playerBet}`;
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "bet"; // **Guardar la acción de apuesta**
         } else if (playerHandStrength >= 4 || (playerHandStrength >= 2 && playerDecisionFactor > 0.4)) {
             document.querySelector(`[data-player='${i}']`).dataset.status = "checking";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} checks`;
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "check"; // **Guardar la acción de apuesta**
         } else {
             document.querySelector(`[data-player='${i}']`).dataset.status = "folded";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} folds`;
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "fold"; // **Guardar la acción de apuesta**
             removeActivePlyr(i);
         }
 
