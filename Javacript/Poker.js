@@ -245,7 +245,8 @@ function removeActivePlyr(plyrID) {
 
 function evaluateHand(iteration, gameStep) {
     let stepPlayed = false;
-    const communityCardDetailsElement = document.getElementById("communityCardDetails");
+   
+   /* const communityCardDetailsElement = document.getElementById("communityCardDetails");
     if (communityCardDetailsElement) {
         communityCardDetailsElement.innerHTML = "The " + gameStepHierarchy[gameStep] + " - Pot: $" + thePot;
     }
@@ -258,8 +259,8 @@ function evaluateHand(iteration, gameStep) {
     const maxButtonElement = document.querySelector("[data-round='max']");
     if (maxButtonElement) {
         maxButtonElement.innerHTML = "Max $" + (monetaryVal[gameIncrement + 1] * 3);
-    }
-
+    } */
+    
     countingIterations = iteration;
     let cardsInvolved = "";
     let cardIndexes = [];
@@ -910,6 +911,9 @@ function deal() {
     playerMoney -= bet;
     setPlayerMoney("betting");
 
+    // Actualización del pot y apuestas acumulativas
+    document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
+
     const betTargetElement = document.getElementById("betTarget");
     if (betTargetElement) {
         betTargetElement.innerHTML = "Bet $" + monetaryVal[1];
@@ -1112,6 +1116,9 @@ function match(checked, betMultiplier) {
 
     // Actualizar visualización del dinero del jugador
     document.getElementById("playerMoney").innerHTML = playerMoney;
+
+     // Actualización del pot y apuestas acumulativas
+     document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
 
     // Muestra de cartas en la comunidad y otros elementos visuales
     if (gameStep === 2) {
