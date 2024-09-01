@@ -1069,7 +1069,6 @@ function match() {
                     playerElement.dataset.status = "folded";
                     playerElement.innerHTML = `Player ${player + 1} is folded by check`;
                     removeActivePlyr(player);
-
                 }
             }
         });
@@ -1108,10 +1107,11 @@ function match() {
         let playerBet = 10;
 
         if (playerHandStrength >= 8 || (playerHandStrength >= 5 && playerDecisionFactor > 0.7)) {
-            playerBet = monetaryVal[gameStep];
+            playerBet = parseInt(document.querySelector("[data-round='match']").innerHTML.split('$')[1]);
             document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${playerBet}`;
             document.querySelector(`[data-player='${i}']`).dataset.lastMove = "bet"; // **Guardar la acción de apuesta**
+            thePot += playerBet; // Añadir la apuesta del jugador al pot
         } else if (playerHandStrength >= 4 || (playerHandStrength >= 2 && playerDecisionFactor > 0.4)) {
             document.querySelector(`[data-player='${i}']`).dataset.status = "checking";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} checks`;
@@ -1129,23 +1129,22 @@ function match() {
         }
     }
 
-    // Actualizar botones de apuestas
+    // Actualizar la apuesta del jugador principal basado en la acción
     const matchButton = document.querySelector("[data-round='match']");
     const raiseButton = document.querySelector("[data-round='raise']");
     const maxButton = document.querySelector("[data-round='max']");
+    let playerBet = 10;
 
-    if (matchButton) {
-        matchButton.innerHTML = `Min Bet $${maxPlayerBet}`;
-    }
-    if (raiseButton) {
-        raiseButton.innerHTML = `Raise to $${Math.ceil(maxPlayerBet * 1.25)}`;
-    }
-    if (maxButton) {
-        maxButton.innerHTML = `All In $${playerMoney}`;
+    // Determinar la acción del jugador principal
+    if (matchButton && matchButton.classList.contains('active')) {
+        playerBet = parseInt(matchButton.innerHTML.split('$')[1]); // Obtener el valor del botón "match"
+    } else if (raiseButton && raiseButton.classList.contains('active')) {
+        playerBet = parseInt(raiseButton.innerHTML.split('$')[1]); // Obtener el valor del botón "raise"
+    } else if (maxButton && maxButton.classList.contains('active')) {
+        playerBet = playerMoney; // All in
     }
 
-    // Actualizar la apuesta del jugador principal
-    let playerBet = monetaryVal[gameStep];
+    // Actualizar la apuesta acumulada del jugador principal
     bet += playerBet;
     playerMoney -= playerBet;
     thePot += playerBet;
@@ -1154,12 +1153,12 @@ function match() {
     // Actualizar el campo Bet en pantalla
     document.getElementById("betTarget").innerHTML = "Bet $" + bet;
     document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
-    
+
     // Actualizar visualización del dinero del jugador
     document.getElementById("playerMoney").innerHTML = playerMoney;
 
-     // Actualización del pot y apuestas acumulativas
-     document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
+    // Actualización del pot y apuestas acumulativas
+    document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
 
     // Evaluar si se debe deshabilitar el botón "check"
     let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
@@ -1171,6 +1170,7 @@ function match() {
         endGame();
     }
 }
+
 
 
 
