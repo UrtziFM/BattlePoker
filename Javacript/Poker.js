@@ -1097,6 +1097,9 @@ function match(checked, betMultiplier) {
         playerMoney -= playerBet; // Restar la apuesta del dinero del jugador principal
         setPlayerMoney("betting");
 
+         // **Actualizar el pot con la nueva apuesta del jugador principal**
+         thePot += playerBet;
+
         // Actualizar el campo Bet en pantalla
         document.getElementById("betTarget").innerHTML = "Bet $" + bet;
         document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
