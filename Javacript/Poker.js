@@ -1048,7 +1048,7 @@ function deal() {
     return false;
 }
 
-function match(checked, betMultiplier) {
+function match() {
     gameIncrement++;
     let gameStep = gameIncrement;
     let maxLength = gameStep < 4 ? gameStep + 1 : 5;
@@ -1074,51 +1074,6 @@ function match(checked, betMultiplier) {
             }
         });
     }
-
-    // Lógica de apuestas si no se ha hecho check
-    if (!checked) {
-        const bluffList = [
-            Math.floor(Math.random() * (100 - 10) + 10),
-            Math.floor(Math.random() * (100 - 50) + 50),
-            Math.floor(Math.random() * (200 - 101) + 101),
-            Math.floor(Math.random() * (200 - 150) + 150),
-            Math.floor(Math.random() * (300 - 201) + 201),
-            Math.floor(Math.random() * (300 - 250) + 250),
-        ];
-
-        if (dblBets || (bluffList.includes(bet1) || bluffList.includes(bet2) || bluffList.includes(bet3)) && !updatedBets) {
-            maxBet = [400, 500, 900];
-            bet1 = Math.floor(Math.random() * (maxBet[0] - 1 + 1) + 10);
-            bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
-            bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
-            monetaryVal = [null, 10, bet1, bet2, bet3];
-            updatedBets = true;
-        }
-
-        // Actualizar la apuesta y el dinero del jugador principal de forma acumulativa
-        let playerBet = monetaryVal[gameStep] * betMultiplier; // Calcular la apuesta para esta iteración
-        bet += playerBet; // Acumular la apuesta total del jugador principal
-        playerMoney -= playerBet; // Restar la apuesta del dinero del jugador principal
-        setPlayerMoney("betting");
-
-         // **Actualizar el pot con la nueva apuesta del jugador principal**
-         thePot += playerBet;
-
-        // Actualizar el campo Bet en pantalla
-        document.getElementById("betTarget").innerHTML = "Bet $" + bet;
-        document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
-        document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep + 1] * 3);
-    } else {
-        // Si se hace check, solo actualizamos el siguiente valor de apuesta en pantalla
-        document.querySelector("[data-round='match']").innerHTML = "Match $" + monetaryVal[gameStep + 1];
-        document.querySelector("[data-round='max']").innerHTML = "Max $" + (monetaryVal[gameStep] * betMultiplier);
-    }
-
-    // Actualizar visualización del dinero del jugador
-    document.getElementById("playerMoney").innerHTML = playerMoney;
-
-     // Actualización del pot y apuestas acumulativas
-     document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
 
     // Muestra de cartas en la comunidad y otros elementos visuales
     if (gameStep === 2) {
@@ -1188,6 +1143,23 @@ function match(checked, betMultiplier) {
     if (maxButton) {
         maxButton.innerHTML = `All In $${playerMoney}`;
     }
+
+    // Actualizar la apuesta del jugador principal
+    let playerBet = monetaryVal[gameStep];
+    bet += playerBet;
+    playerMoney -= playerBet;
+    thePot += playerBet;
+    setPlayerMoney("betting");
+
+    // Actualizar el campo Bet en pantalla
+    document.getElementById("betTarget").innerHTML = "Bet $" + bet;
+    document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
+    
+    // Actualizar visualización del dinero del jugador
+    document.getElementById("playerMoney").innerHTML = playerMoney;
+
+     // Actualización del pot y apuestas acumulativas
+     document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
 
     // Evaluar si se debe deshabilitar el botón "check"
     let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
