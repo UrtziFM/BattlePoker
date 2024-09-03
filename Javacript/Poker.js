@@ -1048,7 +1048,9 @@ function deal() {
     return false;
 }
 
-function match() {
+function match(checked, betMultiplier) {
+    console.log(`Action received - Checked: ${checked}, Bet Multiplier: ${betMultiplier}`);
+    
     gameIncrement++;
     let gameStep = gameIncrement;
     let maxLength = gameStep < 4 ? gameStep + 1 : 5;
@@ -1060,6 +1062,8 @@ function match() {
         return player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.lastMove === "bet";
     });
 
+    console.log(`Iteración ${gameStep}: anyPlayerRaised = ${anyPlayerRaised}`);
+
     // Marcar como "folded" a los jugadores que hicieron "check" si alguien subió la apuesta
     if (anyPlayerRaised) {
         activePlayers.forEach(player => {
@@ -1069,6 +1073,7 @@ function match() {
                     playerElement.dataset.status = "folded";
                     playerElement.innerHTML = `Player ${player + 1} is folded by check`;
                     removeActivePlyr(player);
+                    console.log(`Player ${player + 1} hizo check y fue folded`);
                 }
             }
         });
@@ -1093,7 +1098,7 @@ function match() {
     }
 
     // Lógica de apuestas para los jugadores 2, 3 y 4
-    let maxPlayerBet = 10; // Reiniciar la apuesta máxima
+    let maxPlayerBet = 0; // Reiniciar la apuesta máxima
     for (let i = 1; i <= 3; i++) { // Jugadores 2, 3 y 4
         if (!activePlayers.includes(i)) continue; // Saltar si el jugador ha hecho fold
 
@@ -1107,20 +1112,23 @@ function match() {
         let playerBet = 10;
 
         if (playerHandStrength >= 8 || (playerHandStrength >= 5 && playerDecisionFactor > 0.7)) {
-            playerBet = parseInt(document.querySelector("[data-round='match']").innerHTML.split('$')[1]);
+            playerBet = maxPlayerBet;
             document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${playerBet}`;
-            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "bet"; // **Guardar la acción de apuesta**
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "bet"; // Guardar la acción de apuesta
             thePot += playerBet; // Añadir la apuesta del jugador al pot
+            console.log(`Player ${i + 1} bets: ${playerBet}, Total Pot: ${thePot}`);
         } else if (playerHandStrength >= 4 || (playerHandStrength >= 2 && playerDecisionFactor > 0.4)) {
             document.querySelector(`[data-player='${i}']`).dataset.status = "checking";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} checks`;
-            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "check"; // **Guardar la acción de apuesta**
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "check"; // Guardar la acción de apuesta
+            console.log(`Player ${i + 1} checks`);
         } else {
             document.querySelector(`[data-player='${i}']`).dataset.status = "folded";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} folds`;
-            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "fold"; // **Guardar la acción de apuesta**
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "fold"; // Guardar la acción de apuesta
             removeActivePlyr(i);
+            console.log(`Player ${i + 1} folds`);
         }
 
         // Actualizar la apuesta máxima
@@ -1129,20 +1137,21 @@ function match() {
         }
     }
 
-    // Actualizar la apuesta del jugador principal basado en la acción
-    const matchButton = document.querySelector("[data-round='match']");
-    const raiseButton = document.querySelector("[data-round='raise']");
-    const maxButton = document.querySelector("[data-round='max']");
-    let playerBet = 10;
-
-    // Determinar la acción del jugador principal
-    if (matchButton && matchButton.classList.contains('active')) {
-        playerBet = parseInt(matchButton.innerHTML.split('$')[1]); // Obtener el valor del botón "match"
-    } else if (raiseButton && raiseButton.classList.contains('active')) {
-        playerBet = parseInt(raiseButton.innerHTML.split('$')[1]); // Obtener el valor del botón "raise"
-    } else if (maxButton && maxButton.classList.contains('active')) {
-        playerBet = playerMoney; // All in
+    // Determinar la acción del jugador principal basado en los parámetros recibidos
+    let playerBet = 0;
+    if (!checked) { // Si no se hace check, procesar la apuesta
+        if (betMultiplier === 1) {
+            playerBet = maxPlayerBet; // Apuesta igual a la mínima
+        } else if (betMultiplier === 2) {
+            playerBet = Math.ceil(maxPlayerBet * 1.25); // Aumento de la apuesta
+        } else if (betMultiplier === 3) {
+            playerBet = playerMoney; // All in
+        }
+    } else {
+        playerBet = 0; // Check, no hay apuesta adicional
     }
+
+    console.log(`Player principal action: Checked: ${checked}, Bet Multiplier: ${betMultiplier}, Player bet: ${playerBet}`);
 
     // Actualizar la apuesta acumulada del jugador principal
     bet += playerBet;
@@ -1150,15 +1159,14 @@ function match() {
     thePot += playerBet;
     setPlayerMoney("betting");
 
+    console.log(`Updated values - Bet: ${bet}, Player Money: ${playerMoney}, Pot: ${thePot}`);
+
     // Actualizar el campo Bet en pantalla
     document.getElementById("betTarget").innerHTML = "Bet $" + bet;
     document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
 
     // Actualizar visualización del dinero del jugador
     document.getElementById("playerMoney").innerHTML = playerMoney;
-
-    // Actualización del pot y apuestas acumulativas
-    document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
 
     // Evaluar si se debe deshabilitar el botón "check"
     let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
@@ -1170,6 +1178,9 @@ function match() {
         endGame();
     }
 }
+
+
+
 
 
 
