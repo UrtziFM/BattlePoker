@@ -1137,6 +1137,11 @@ function match(checked, betMultiplier) {
         }
     }
 
+    // Configurar los botones según las apuestas calculadas
+    document.querySelector("[data-round='match']").innerHTML = `Min Bet $${maxPlayerBet}`;
+    document.querySelector("[data-round='raise']").innerHTML = `Raise to $${Math.ceil(maxPlayerBet * 1.25)}`; // Raise al 25% sobre la apuesta máxima
+    document.querySelector("[data-round='max']").innerHTML = `All In $${playerMoney}`; // All-in con todo el dinero disponible
+
     // Determinar la acción del jugador principal basado en los parámetros recibidos
     let playerBet = 0;
     if (!checked) { // Si no se hace check, procesar la apuesta
