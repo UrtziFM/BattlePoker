@@ -1050,7 +1050,7 @@ function deal() {
 
 function match(checked, betMultiplier) {
     console.log(`Action received - Checked: ${checked}, Bet Multiplier: ${betMultiplier}`);
-    
+
     gameIncrement++;
     let gameStep = gameIncrement;
     let maxLength = gameStep < 4 ? gameStep + 1 : 5;
@@ -1098,7 +1098,7 @@ function match(checked, betMultiplier) {
     }
 
     // Lógica de apuestas para los jugadores 2, 3 y 4
-    let maxPlayerBet = 0; // Reiniciar la apuesta máxima
+    let maxPlayerBet = 10; // Establecer una apuesta mínima para comenzar
     for (let i = 1; i <= 3; i++) { // Jugadores 2, 3 y 4
         if (!activePlayers.includes(i)) continue; // Saltar si el jugador ha hecho fold
 
@@ -1109,10 +1109,10 @@ function match(checked, betMultiplier) {
 
         const playerHandStrength = calculateHandStrength(playersHands[i]);
         const playerDecisionFactor = Math.random();
-        let playerBet = 10;
+        let playerBet = 10; // Apuesta mínima para cada jugador
 
         if (playerHandStrength >= 8 || (playerHandStrength >= 5 && playerDecisionFactor > 0.7)) {
-            playerBet = maxPlayerBet;
+            playerBet = Math.max(maxPlayerBet, 10); // Apuesta igual o mayor a la apuesta mínima
             document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${playerBet}`;
             document.querySelector(`[data-player='${i}']`).dataset.lastMove = "bet"; // Guardar la acción de apuesta
@@ -1143,25 +1143,25 @@ function match(checked, betMultiplier) {
     document.querySelector("[data-round='max']").innerHTML = `All In $${playerMoney}`; // All-in con todo el dinero disponible
 
     // Determinar la acción del jugador principal basado en los parámetros recibidos
-    let playerBet = 0;
+    let player1Bet = 0;
     if (!checked) { // Si no se hace check, procesar la apuesta
         if (betMultiplier === 1) {
-            playerBet = maxPlayerBet; // Apuesta igual a la mínima
+            player1Bet = maxPlayerBet; // Apuesta igual a la mínima
         } else if (betMultiplier === 2) {
-            playerBet = Math.ceil(maxPlayerBet * 1.25); // Aumento de la apuesta
+            player1Bet = Math.ceil(maxPlayerBet * 1.25); // Aumento de la apuesta
         } else if (betMultiplier === 3) {
-            playerBet = playerMoney; // All in
+            player1Bet = playerMoney; // All in
         }
     } else {
-        playerBet = 0; // Check, no hay apuesta adicional
+        player1Bet = 0; // Check, no hay apuesta adicional
     }
 
-    console.log(`Player principal action: Checked: ${checked}, Bet Multiplier: ${betMultiplier}, Player bet: ${playerBet}`);
+    console.log(`Player principal action: Checked: ${checked}, Bet Multiplier: ${betMultiplier}, Player bet: ${player1Bet}`);
 
     // Actualizar la apuesta acumulada del jugador principal
-    bet += playerBet;
-    playerMoney -= playerBet;
-    thePot += playerBet;
+    bet += player1Bet;
+    playerMoney -= player1Bet;
+    thePot += player1Bet;
     setPlayerMoney("betting");
 
     console.log(`Updated values - Bet: ${bet}, Player Money: ${playerMoney}, Pot: ${thePot}`);
@@ -1183,6 +1183,7 @@ function match(checked, betMultiplier) {
         endGame();
     }
 }
+
 
 
 
