@@ -1144,19 +1144,33 @@ function match(checked, betMultiplier) {
 
     // Determinar la acción del jugador principal basado en los parámetros recibidos
     let player1Bet = 0;
+
     if (!checked) { // Si no se hace check, procesar la apuesta
-        if (betMultiplier === 1) {
-            player1Bet = maxPlayerBet; // Apuesta igual a la mínima
-        } else if (betMultiplier === 2) {
-            player1Bet = Math.ceil(maxPlayerBet * 1.25); // Aumento de la apuesta
-        } else if (betMultiplier === 3) {
-            player1Bet = playerMoney; // All in
+        if (gameStep === 2) { 
+            // Si estamos en el step 2, recoger los valores actuales de los botones
+            if (betMultiplier === 1) {
+                player1Bet = parseFloat(document.querySelector("[data-round='match']").innerHTML.split('$')[1]); // Obtener el valor del botón "match"
+            } else if (betMultiplier === 2) {
+                player1Bet = parseFloat(document.querySelector("[data-round='raise']").innerHTML.split('$')[1]); // Obtener el valor del botón "raise"
+            } else if (betMultiplier === 3) {
+                player1Bet = parseFloat(document.querySelector("[data-round='max']").innerHTML.split('$')[1]); // Obtener el valor del botón "max"
+            }
+        } else {
+            // Para otros gameSteps, usar la lógica de apuestas estándar
+            if (betMultiplier === 1) {
+                player1Bet = maxPlayerBet; // Apuesta igual a la mínima
+            } else if (betMultiplier === 2) {
+                player1Bet = Math.ceil(maxPlayerBet * 1.25); // Aumento de la apuesta
+            } else if (betMultiplier === 3) {
+                player1Bet = playerMoney; // All in
+            }
         }
     } else {
         player1Bet = 0; // Check, no hay apuesta adicional
     }
 
     console.log(`Player principal action: Checked: ${checked}, Bet Multiplier: ${betMultiplier}, Player bet: ${player1Bet}`);
+
 
     // Actualizar la apuesta acumulada del jugador principal
     bet += player1Bet;
