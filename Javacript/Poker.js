@@ -1005,12 +1005,17 @@ function deal() {
     // Ordenar las acciones por recompensa estimada (de mayor a menor)
     actionRewards.sort((a, b) => b.reward - a.reward);
 
-    // Seleccionar la mejor acción recomendada
-    const bestAction = actionRewards[0].action;
-    console.log(`Mejor acción recomendada: ${bestAction}, con recompensa estimada: ${actionRewards[0].reward}`);
+   // Seleccionar las tres mejores acciones recomendadas
+    const topActions = actionRewards.slice(0, 4); // Obtener las tres primeras acciones
 
-    // Mostrar la recomendación al jugador
-    document.getElementById("message").innerHTML = `Recomendación: ${bestAction.toUpperCase()} (Recompensa estimada: ${actionRewards[0].reward.toFixed(2)})`;
+    // Mostrar las tres mejores recomendaciones al jugador
+    let recommendationsHTML = "Recomendaciones: ";
+    topActions.forEach((action, index) => {
+        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Recompensa estimada: ${action.reward.toFixed(2)})<br>`;
+    });
+
+    // Mostrar la recomendación en el elemento correspondiente en la interfaz
+    document.getElementById("message").innerHTML = recommendationsHTML;
 
     // Simular apuestas iniciales basadas en la fuerza de la mano
     let maxPlayerBet = 10; // Apuesta inicial mínima
@@ -1120,12 +1125,17 @@ function match(checked, betMultiplier) {
     // Ordenar las acciones por recompensa estimada (de mayor a menor)
     actionRewards.sort((a, b) => b.reward - a.reward);
 
-    // Seleccionar la mejor acción recomendada
-    const bestAction = actionRewards[0].action;
-    console.log(`Mejor acción recomendada: ${bestAction}, con recompensa estimada: ${actionRewards[0].reward}`);
+    // Seleccionar las tres mejores acciones recomendadas
+    const topActions = actionRewards.slice(0, 4); // Obtener las tres primeras acciones
 
-    // Mostrar la recomendación al jugador
-    document.getElementById("message").innerHTML = `Recomendación: ${bestAction.toUpperCase()} (Recompensa estimada: ${actionRewards[0].reward.toFixed(2)})`;
+    // Mostrar las tres mejores recomendaciones al jugador
+    let recommendationsHTML = "Recomendaciones: ";
+    topActions.forEach((action, index) => {
+        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Recompensa estimada: ${action.reward.toFixed(2)})<br>`;
+    });
+
+    // Mostrar la recomendación en el elemento correspondiente en la interfaz
+    document.getElementById("message").innerHTML = recommendationsHTML;
 
      // Determinar la acción del jugador principal basado en los parámetros recibidos
      let player1Bet = 0;
