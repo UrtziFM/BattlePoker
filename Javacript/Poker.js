@@ -988,6 +988,30 @@ function deal() {
         playerScores.push(playerScore);
     }
 
+     // Obtener el estado actual del juego para la recomendación del CFR
+     const currentState = {
+        playerHand: playersHands[0], // La mano del jugador principal
+        pot: thePot, // Tamaño del pot actual
+        currentBet: bet, // Apuesta actual del jugador
+        activePlayers: activePlayers.length // Número de jugadores activos
+    };
+
+    // Obtener recomendaciones del algoritmo CFR
+    const possibleActions = ['check', 'match', 'raise', 'allin'];
+    const actionRewards = possibleActions.map(action => {
+        return { action, reward: calculateReward(currentState, action) };
+    });
+
+    // Ordenar las acciones por recompensa estimada (de mayor a menor)
+    actionRewards.sort((a, b) => b.reward - a.reward);
+
+    // Seleccionar la mejor acción recomendada
+    const bestAction = actionRewards[0].action;
+    console.log(`Mejor acción recomendada: ${bestAction}, con recompensa estimada: ${actionRewards[0].reward}`);
+
+    // Mostrar la recomendación al jugador
+    document.getElementById("message").innerHTML = `Recomendación: ${bestAction.toUpperCase()} (Recompensa estimada: ${actionRewards[0].reward.toFixed(2)})`;
+
     // Simular apuestas iniciales basadas en la fuerza de la mano
     let maxPlayerBet = 10; // Apuesta inicial mínima
 
