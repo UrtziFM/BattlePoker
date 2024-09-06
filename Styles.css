@@ -104,14 +104,6 @@ body {
     width: 100%;
 }
 
-.containerRight {
-    width: 40%;
-    margin: 0 1%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
 .containerCenter {
     width: 55%;
     margin: 0 1%;
@@ -238,8 +230,66 @@ body {
     text-align: center;
 }
 
+.containerRight {
+    flex: 1;
+    margin: 0 1%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 
-.containerRight img {
-    max-width: 100%;
+}
+
+.status-box {
+    background-color: #A6784F;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    margin-left: 25px;
+}
+
+.justify-content-center {
+    justify-content: center;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.status {
+    background-color: #000;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.pokerRules {
+    max-width: 50%;
     height: auto;
 }
+
+.top {
+    background-color: #A6784F;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    margin-left: 25px;
+}
+
+.topMoves {
+    background-color: #000;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+#top-moves {
+    background-color: #ECD6A2;
+    color: black;
+    border-radius: 5px;
+    padding: 5px;
+}
+

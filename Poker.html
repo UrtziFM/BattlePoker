@@ -26,6 +26,7 @@
 </head>
 
 <body>
+    <main>
     <div class="containerMain">
         <div class="containerCenter">
             <div class="button-group-left">
@@ -83,9 +84,19 @@
             </div>
         </div>
         <div class="containerRight">
-            <img src="assets/handRanking.png" class="pokerRules"/>
+            <div class="status-box text-center">
+                <h2 class="status">Status</h2>
+                <img src="assets/handRanking.png" class="pokerRules"/>
+            </div>
+            <div class="top text-center">
+                <h4 class="topMoves">UrtziAI TOP 3 Moves</h4>
+                <input type="checkbox" id="showHint" name="showHint" value="showHint">
+                    <label class="label" for="showHint">Check to highlight by blue your next best move</label>
+                <div id="top-moves"></div>
+            </div>       
         </div>
     </div> 
+    </main>
     <footer class="footerMain">
         <small> Copyright &copy; 2024
             <a class="footerLink" href="https://www.urtziarana.com">Urtzi Arana Santamaria</a> 
