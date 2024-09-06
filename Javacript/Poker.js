@@ -785,43 +785,40 @@ function evaluateHand(iteration, gameStep) {
 }
 
 function calculateHandStrength(hand) {
-    // Mapea las cartas para su evaluación
+    // Mapping cards for evaluation
     const values = hand.map(card => cardHeirarchy.indexOf(card.value));
     const suits = hand.map(card => card.suit);
 
-    // Cuenta las ocurrencias de cada valor
     const valueCounts = {};
     values.forEach(value => {
         valueCounts[value] = (valueCounts[value] || 0) + 1;
     });
 
-    // Determina el número máximo de cartas iguales
+    // Same cards max
     const counts = Object.values(valueCounts);
     const maxCount = Math.max(...counts);
 
-    // Verifica si hay una secuencia (escalera)
+    // Straight verify
     const isStraight = values
         .sort((a, b) => a - b)
         .every((val, index, arr) => index === 0 || val === arr[index - 1] + 1);
 
-    // Verifica si todas las cartas son del mismo palo (color)
+    // Flush verify
     const isFlush = suits.every(suit => suit === suits[0]);
 
-    // Evalúa la fuerza de la mano
-    if (isStraight && isFlush) return 8; // Escalera de color
-    if (maxCount === 4) return 7; // Póker
-    if (maxCount === 3 && counts.includes(2)) return 6; // Full
-    if (isFlush) return 5; // Color
-    if (isStraight) return 4; // Escalera
-    if (maxCount === 3) return 3; // Trío
-    if (counts.filter(count => count === 2).length === 2) return 2; // Doble pareja
-    if (maxCount === 2) return 1; // Pareja
-    return 0; // Carta alta
+    if (isStraight && isFlush) return 8; 
+    if (maxCount === 4) return 7; 
+    if (maxCount === 3 && counts.includes(2)) return 6; 
+    if (isFlush) return 5; 
+    if (isStraight) return 4; 
+    if (maxCount === 3) return 3; 
+    if (counts.filter(count => count === 2).length === 2) return 2; 
+    if (maxCount === 2) return 1; 
+    return 0; 
 }
 
-// Función para finalizar el juego
 function endGame() {
-    // Deshabilitar todos los botones
+    // Disable buttons
     document.querySelector("[data-round='max']").disabled = true;
     document.querySelector("[data-round='raise']").disabled = true;
     document.querySelector("[data-round='match']").disabled = true;
@@ -833,26 +830,24 @@ function deal() {
     resetPlayerMoney();
     hasRaised = false;
 
-    // Limpieza inicial de la interfaz de usuario y variables
     for (let i = 0; i < playerIds.length; i++) {
         const playerElement = document.getElementById(playerIds[i]);
-        if (playerElement) { // Verificar si el elemento existe
+        if (playerElement) { 
             playerElement.innerHTML = "";
         }
     }
 
     communityCardsHTML = "";
 
-    // Definición de apuestas máximas dinámicas basadas en el número de manos jugadas
-    let baseBet = 50; // Apuesta base inicial
-    let betIncrement = playedTimes * 10; // Incremento de apuesta basado en el número de manos jugadas
+    let baseBet = 50; // min start bet
+    let betIncrement = playedTimes * 10; 
     maxBet = [
         baseBet + betIncrement, 
         baseBet * 2 + betIncrement, 
         baseBet * 3 + betIncrement
     ];
 
-    // Cálculo de apuestas dinámicas basadas en los máximos establecidos
+    // Dynamic bets 
     bet1 = Math.floor(Math.random() * (maxBet[0] - 10 + 1) + 10);
     bet2 = Math.floor(Math.random() * (maxBet[1] - maxBet[0] + 1) + maxBet[0]);
     bet3 = Math.floor(Math.random() * (maxBet[2] - maxBet[1] + 1) + maxBet[1]);
@@ -880,7 +875,7 @@ function deal() {
     document.getElementById("communityCardDetails").classList.add("hide");
 
     [].forEach.call(document.querySelectorAll(".alert[data-player]"), function (e) {
-        if (e) { // Verificar si el elemento existe
+        if (e) { 
             e.classList.remove("alert-danger");
             e.classList.add("alert-info");
             e.classList.remove("hide");
@@ -911,7 +906,7 @@ function deal() {
     playerMoney -= bet;
     setPlayerMoney("betting");
 
-    // Actualización del pot y apuestas acumulativas
+    // Update pot and bets
     document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
 
     const betTargetElement = document.getElementById("betTarget");
@@ -947,7 +942,6 @@ function deal() {
     
     cards = JSON.parse(localStorage.getItem("completeCards"));
 
-    // Función para generar cartas para cada jugador
     function generatePlayer(iteration) {
         cardsInvolved = "";
         let playersCards = [];
@@ -972,7 +966,7 @@ function deal() {
             });
         }
         const playerElement = document.getElementById(playerIds[iteration]);
-        if (playerElement) { // Verificar si el elemento existe
+        if (playerElement) { 
             playerElement.innerHTML = playerCardsHTML;
         }
         playersHands[iteration] = handObj;
@@ -980,7 +974,6 @@ function deal() {
         return false;
     }
 
-    // Generar cartas para cada jugador y calcular la fuerza de la mano
     let playerScores = [];
     for (let i = 0; i < 4; i++) {
         generatePlayer(i);
@@ -988,61 +981,59 @@ function deal() {
         playerScores.push(playerScore);
     }
 
-     // Obtener el estado actual del juego para la recomendación del CFR
+     // CFR algorithm
      const currentState = {
-        playerHand: playersHands[0], // La mano del jugador principal
-        pot: thePot, // Tamaño del pot actual
-        currentBet: bet, // Apuesta actual del jugador
-        activePlayers: activePlayers.length // Número de jugadores activos
+        playerHand: playersHands[0], // Principal player hand
+        pot: thePot, // Pot size
+        currentBet: bet, // Initial bet
+        activePlayers: activePlayers.length // Active players
     };
 
-    // Obtener recomendaciones del algoritmo CFR
+    // CFR recommendations
     const possibleActions = ['check', 'match', 'raise', 'allin'];
     const actionRewards = possibleActions.map(action => {
         return { action, reward: calculateReward(currentState, action) };
     });
 
-    // Ordenar las acciones por recompensa estimada (de mayor a menor)
+    // Sort actions
     actionRewards.sort((a, b) => b.reward - a.reward);
 
-   // Seleccionar las tres mejores acciones recomendadas
-    const topActions = actionRewards.slice(0, 4); // Obtener las tres primeras acciones
+    const topActions = actionRewards.slice(0, 4); 
 
-    // Mostrar las tres mejores recomendaciones al jugador
-    let recommendationsHTML = "Recomendaciones: ";
+    // Show recommendations
+    let recommendationsHTML = "";
     topActions.forEach((action, index) => {
         recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Recompensa estimada: ${action.reward.toFixed(2)})<br>`;
     });
 
-    // Mostrar la recomendación en el elemento correspondiente en la interfaz
-    document.getElementById("message").innerHTML = recommendationsHTML;
+    document.getElementById("top-moves").innerHTML = recommendationsHTML;
 
-    // Simular apuestas iniciales basadas en la fuerza de la mano
-    let maxPlayerBet = 10; // Apuesta inicial mínima
+    // Hand strength simulation
+    let maxPlayerBet = 10; 
 
-    for (let i = 1; i <= 3; i++) { // Jugadores 2, 3, y 4
+    for (let i = 1; i <= 3; i++) { // players 2,3,4
         const score = playerScores[i];
-        const betDecision = Math.random(); // Factor aleatorio para mayor realismo
-        let playerBet = 10; // Apuesta inicial para cada jugador
+        const betDecision = Math.random(); // random factor
+        let playerBet = 10; 
 
-        if (score >= 8 || betDecision > 0.8) { // Buena mano o decisión agresiva
-            playerBet = bet2; // Ejemplo de apuesta más alta
+        if (score >= 8 || betDecision > 0.8) { // Agressive
+            playerBet = bet2; 
             const playerElement = document.querySelector(`[data-player='${i}']`);
             if (playerElement) {
                 playerElement.dataset.status = "betting";
                 playerElement.dataset.lastMove = "bet";
                 playerElement.innerHTML = `Player ${i + 1} bets $${playerBet}`;
             }
-        } else if (score >= 4 || betDecision > 0.5) { // Mano moderada o decisión moderada
-            playerBet = 10; // Apuesta baja
+        } else if (score >= 4 || betDecision > 0.5) { // Medium 
+            playerBet = 10; 
             const playerElement = document.querySelector(`[data-player='${i}']`);
             if (playerElement) {
                 playerElement.dataset.status = "checking";
                 playerElement.dataset.lastMove = "check";
                 playerElement.innerHTML = `Player ${i + 1} checks`;
             }
-        } else { // Mano débil o decisión conservadora
-            playerBet = 0; // No apuesta
+        } else { // Weak
+            playerBet = 0; // No bet
             const playerElement = document.querySelector(`[data-player='${i}']`);
             if (playerElement) {
                 playerElement.dataset.status = "folded";
@@ -1052,24 +1043,24 @@ function deal() {
             removeActivePlyr(i);
         }
 
-        // Actualizar la apuesta máxima si el jugador actual apuesta más
+        // Update the bet if there is upbet
         if (playerBet > maxPlayerBet) {
             maxPlayerBet = playerBet;
         }
     }
 
-    // Configurar los botones según las apuestas calculadas
+    // Buttons configuration
     document.querySelector("[data-round='match']").innerHTML = `Min Bet $${maxPlayerBet}`;
     document.querySelector("[data-round='raise']").innerHTML = `Raise to $${Math.ceil(maxPlayerBet * 1.25)}`; // Raise al 25% sobre la apuesta máxima
     document.querySelector("[data-round='max']").innerHTML = `All In $${playerMoney}`; // All-in con todo el dinero disponible
 
-    // Evaluar si hay un ganador al inicio de la ronda
+    // Start winner evaluation
     if (activePlayers.length === 1) { 
         endGame();
         return false;
     }
 
-    // Evaluar si deshabilitar el botón "check"
+    // Disable check
     let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
     hasRaised = shouldDisableCheck; 
     document.querySelector("[data-round='check']").disabled = hasRaised;
@@ -1086,14 +1077,14 @@ function match(checked, betMultiplier) {
 
     document.getElementById("communityCardDetails").classList.remove("hide");
 
-    // Verificar si hubo una subida de apuesta en la ronda anterior
+    // Verify upbet in the last round
     let anyPlayerRaised = activePlayers.some(player => {
         return player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.lastMove === "bet";
     });
 
     console.log(`Iteración ${gameStep}: anyPlayerRaised = ${anyPlayerRaised}`);
 
-    // Marcar como "folded" a los jugadores que hicieron "check" si alguien subió la apuesta
+    // Folder players after betting
     if (anyPlayerRaised) {
         activePlayers.forEach(player => {
             if (player !== 0) {
@@ -1108,67 +1099,63 @@ function match(checked, betMultiplier) {
         });
     }
 
-    // Obtener el estado actual del juego para la recomendación del CFR
+    // CFR Recommendations
     const currentState = {
-        playerHand: playersHands[0], // La mano del jugador principal
-        pot: thePot, // Tamaño del pot actual
-        currentBet: bet, // Apuesta actual del jugador
-        activePlayers: activePlayers.length // Número de jugadores activos
+        playerHand: playersHands[0], 
+        pot: thePot, 
+        currentBet: bet, 
+        activePlayers: activePlayers.length 
     };
 
-    // Obtener recomendaciones del algoritmo CFR
     const possibleActions = ['check', 'match', 'raise', 'allin'];
     const actionRewards = possibleActions.map(action => {
         return { action, reward: calculateReward(currentState, action) };
     });
 
-    // Ordenar las acciones por recompensa estimada (de mayor a menor)
+    // Sort
     actionRewards.sort((a, b) => b.reward - a.reward);
 
-    // Seleccionar las tres mejores acciones recomendadas
-    const topActions = actionRewards.slice(0, 4); // Obtener las tres primeras acciones
+    const topActions = actionRewards.slice(0, 4); 
 
-    // Mostrar las tres mejores recomendaciones al jugador
-    let recommendationsHTML = "Recomendaciones: ";
+    // Show recommendations
+    let recommendationsHTML = "";
     topActions.forEach((action, index) => {
         recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Recompensa estimada: ${action.reward.toFixed(2)})<br>`;
     });
 
-    // Mostrar la recomendación en el elemento correspondiente en la interfaz
-    document.getElementById("message").innerHTML = recommendationsHTML;
+    document.getElementById("top-moves").innerHTML = recommendationsHTML;
 
-     // Determinar la acción del jugador principal basado en los parámetros recibidos
      let player1Bet = 0;
-     let maxPlayerBet = 10; // Establecer una apuesta mínima para comenzar
+     let maxPlayerBet = 10; // Minimun bet
 
-     if (!checked) { // Si no se hace check, procesar la apuesta
+     if (!checked) { 
          if (gameStep === 2) { 
-             // Si estamos en el step 2, recoger los valores actuales de los botones
+             // Validate step
              if (betMultiplier === 1) {
-                 player1Bet = parseFloat(document.querySelector("[data-round='match']").innerHTML.split('$')[1]); // Obtener el valor del botón "match"
+                 player1Bet = parseFloat(document.querySelector("[data-round='match']").innerHTML.split('$')[1]); 
              } else if (betMultiplier === 2) {
-                 player1Bet = parseFloat(document.querySelector("[data-round='raise']").innerHTML.split('$')[1]); // Obtener el valor del botón "raise"
+                 player1Bet = parseFloat(document.querySelector("[data-round='raise']").innerHTML.split('$')[1]); 
              } else if (betMultiplier === 3) {
-                 player1Bet = parseFloat(document.querySelector("[data-round='max']").innerHTML.split('$')[1]); // Obtener el valor del botón "max"
+                 player1Bet = parseFloat(document.querySelector("[data-round='max']").innerHTML.split('$')[1]); 
              }
          } else {
-             // Para otros gameSteps, usar la lógica de apuestas estándar
+             // Standar logic
              if (betMultiplier === 1) {
-                 player1Bet = maxPlayerBet; // Apuesta igual a la mínima
+                 player1Bet = maxPlayerBet; // Minimun bet match
              } else if (betMultiplier === 2) {
-                 player1Bet = Math.ceil(maxPlayerBet * 1.25); // Aumento de la apuesta
+                 player1Bet = Math.ceil(maxPlayerBet * 1.25); // Raise bet
              } else if (betMultiplier === 3) {
                  player1Bet = playerMoney; // All in
              }
          }
      } else {
-         player1Bet = 0; // Check, no hay apuesta adicional
+         player1Bet = 0; // Check
      }
  
      console.log(`Player principal action: Checked: ${checked}, Bet Multiplier: ${betMultiplier}, Player bet: ${player1Bet}`);
  
  
-     // Actualizar la apuesta acumulada del jugador principal
+     // Update player bet and pot
      bet += player1Bet;
      playerMoney -= player1Bet;
      thePot += player1Bet;
@@ -1176,14 +1163,12 @@ function match(checked, betMultiplier) {
  
      console.log(`Updated values - Bet: ${bet}, Player Money: ${playerMoney}, Pot: ${thePot}`);
  
-     // Actualizar el campo Bet en pantalla
      document.getElementById("betTarget").innerHTML = "Bet $" + bet;
      document.getElementById("communityCardDetails").innerHTML = "The Pot $" + thePot;
  
-     // Actualizar visualización del dinero del jugador
      document.getElementById("playerMoney").innerHTML = playerMoney;
 
-    // Muestra de cartas en la comunidad y otros elementos visuales
+    // Show cards
     if (gameStep === 2) {
         communityCards = [];
         document.getElementById("communityCardDetails").classList.remove("hide");
@@ -1192,7 +1177,7 @@ function match(checked, betMultiplier) {
         buildCommunityCards(maxLength, gameStep);
     }
 
-    // Evaluar cada mano de los jugadores activos
+    // Evaluate players hand in each iteration
     let evaled = [];
     for (let i = 0; i < activePlayers.length; i++) {
         if (!evaled.includes(activePlayers[i]) && activePlayers[i] !== undefined) {
@@ -1201,56 +1186,53 @@ function match(checked, betMultiplier) {
         }
     }
 
-    // Lógica de apuestas para los jugadores 2, 3 y 4
-    for (let i = 1; i <= 3; i++) { // Jugadores 2, 3 y 4
-        if (!activePlayers.includes(i)) continue; // Saltar si el jugador ha hecho fold
+    // Players logic bets
+    for (let i = 1; i <= 3; i++) { // Players 2,3,4
+        if (!activePlayers.includes(i)) continue; // Jump if a player is folded
 
-        if (gameStep >= 4) { // Si es la última iteración antes de mostrar la última carta, no permitir más apuestas
+        if (gameStep >= 4) { 
             document.querySelector(`[data-player='${i}']`).dataset.status = "finished";
             continue;
         }
 
         const playerHandStrength = calculateHandStrength(playersHands[i]);
         const playerDecisionFactor = Math.random();
-        let playerBet = 10; // Apuesta mínima para cada jugador
+        let playerBet = 10; 
 
         if (playerHandStrength >= 8 || (playerHandStrength >= 5 && playerDecisionFactor > 0.7)) {
-            playerBet = Math.max(maxPlayerBet, 10); // Apuesta igual o mayor a la apuesta mínima
+            playerBet = Math.max(maxPlayerBet, 10); 
             document.querySelector(`[data-player='${i}']`).dataset.status = "betting";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} bets $${playerBet}`;
-            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "bet"; // Guardar la acción de apuesta
-            thePot += playerBet; // Añadir la apuesta del jugador al pot
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "bet"; 
+            thePot += playerBet; 
             console.log(`Player ${i + 1} bets: ${playerBet}, Total Pot: ${thePot}`);
         } else if (playerHandStrength >= 4 || (playerHandStrength >= 2 && playerDecisionFactor > 0.4)) {
             document.querySelector(`[data-player='${i}']`).dataset.status = "checking";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} checks`;
-            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "check"; // Guardar la acción de apuesta
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "check"; 
             console.log(`Player ${i + 1} checks`);
         } else {
             document.querySelector(`[data-player='${i}']`).dataset.status = "folded";
             document.querySelector(`[data-player='${i}']`).innerHTML = `Player ${i + 1} folds`;
-            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "fold"; // Guardar la acción de apuesta
+            document.querySelector(`[data-player='${i}']`).dataset.lastMove = "fold"; 
             removeActivePlyr(i);
             console.log(`Player ${i + 1} folds`);
         }
 
-        // Actualizar la apuesta máxima
         if (playerBet > maxPlayerBet) {
             maxPlayerBet = playerBet;
         }
     }
 
-    // Configurar los botones según las apuestas calculadas
     document.querySelector("[data-round='match']").innerHTML = `Min Bet $${maxPlayerBet}`;
-    document.querySelector("[data-round='raise']").innerHTML = `Raise to $${Math.ceil(maxPlayerBet * 1.25)}`; // Raise al 25% sobre la apuesta máxima
-    document.querySelector("[data-round='max']").innerHTML = `All In $${playerMoney}`; // All-in con todo el dinero disponible
+    document.querySelector("[data-round='raise']").innerHTML = `Raise to $${Math.ceil(maxPlayerBet * 1.25)}`; 
+    document.querySelector("[data-round='max']").innerHTML = `All In $${playerMoney}`; 
 
-    // Evaluar si se debe deshabilitar el botón "check"
     let shouldDisableCheck = activePlayers.some(player => player !== 0 && document.querySelector(`[data-player='${player}']`).dataset.status === 'betting');
     hasRaised = shouldDisableCheck; 
     document.querySelector("[data-round='check']").disabled = hasRaised;
 
-    // Evaluar si hay un ganador o todos menos uno se han retirado
+    // Evaluate if there is only one player
     if (gameStep >= 4 || activePlayers.length === 1) {
         endGame();
     }

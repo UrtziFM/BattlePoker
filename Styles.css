@@ -240,7 +240,7 @@ body {
 }
 
 .status-box {
-    background-color: #A6784F;
+    background-color: #006400;
     color: white;
     padding: 15px;
     border-radius: 5px;
@@ -265,12 +265,12 @@ body {
 }
 
 .pokerRules {
-    max-width: 50%;
+    max-width: 75%;
     height: auto;
 }
 
 .top {
-    background-color: #A6784F;
+    background-color: #006400;
     color: white;
     padding: 15px;
     border-radius: 5px;
@@ -287,8 +287,8 @@ body {
 }
 
 #top-moves {
-    background-color: #ECD6A2;
-    color: black;
+    background-color: black;
+    color: white;
     border-radius: 5px;
     padding: 5px;
 }
