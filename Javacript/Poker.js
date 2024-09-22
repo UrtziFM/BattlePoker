@@ -1003,7 +1003,7 @@ function deal() {
     // Show recommendations
     let recommendationsHTML = "";
     topActions.forEach((action, index) => {
-        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Recompensa estimada: ${action.reward.toFixed(2)})<br>`;
+        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Estimated Reward: ${action.reward.toFixed(2)})<br>`;
     });
 
     document.getElementById("top-moves").innerHTML = recommendationsHTML;
@@ -1120,7 +1120,7 @@ function match(checked, betMultiplier) {
     // Show recommendations
     let recommendationsHTML = "";
     topActions.forEach((action, index) => {
-        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Recompensa estimada: ${action.reward.toFixed(2)})<br>`;
+        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Estimated Reward: ${action.reward.toFixed(2)})<br>`;
     });
 
     document.getElementById("top-moves").innerHTML = recommendationsHTML;
