@@ -982,31 +982,66 @@ function deal() {
     }
 
      // CFR algorithm
-     const currentState = {
+    // Prepare the current state
+    const currentState = {
         playerHand: playersHands[0], // Principal player hand
         pot: thePot, // Pot size
         currentBet: bet, // Initial bet
-        activePlayers: activePlayers.length // Active players
+        activePlayers: activePlayers.length, // Active players
+        cardsDealt: communityCards.length + playersHands[0].length // Number of cards dealt
     };
 
-    // CFR recommendations
+    // Expose currentState and getCurrentState globally
+    window.currentState = currentState;
+    window.getCurrentState = function() {
+        return window.currentState;
+    };
+
+    // Train the CFR algorithm
+    for (let i = 0; i < 10000; i++) {
+        playRound();
+    }
+
+    // Get the current strategy
+    let strategy = getStrategy();
+
+    // Possible actions
     const possibleActions = ['check', 'match', 'raise', 'allin'];
-    const actionRewards = possibleActions.map(action => {
-        return { action, reward: calculateReward(currentState, action) };
+
+    // Calculate estimated rewards and probabilities
+    const actionData = possibleActions.map(action => {
+        const reward = calculateReward(currentState, action);
+        const probability = strategy[action] || 0;
+        return { action, reward, probability };
     });
 
-    // Sort actions
-    actionRewards.sort((a, b) => b.reward - a.reward);
+    // Sort actions based on estimated rewards (descending)
+    actionData.sort((a, b) => b.reward - a.reward);
 
-    const topActions = actionRewards.slice(0, 4); 
+    // Retrieve the global min and max rewards
+    const minRewards = getMinRewards();
+    const maxRewards = getMaxRewards();
 
-    // Show recommendations
-    let recommendationsHTML = "";
-    topActions.forEach((action, index) => {
-        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Estimated Reward: ${action.reward.toFixed(2)})<br>`;
+    // Calculate overall reward range across all actions
+    const allRewards = Object.values(minRewards).concat(Object.values(maxRewards));
+    const globalMinReward = Math.min(...allRewards);
+    const globalMaxReward = Math.max(...allRewards);
+
+    // Prepare recommendations HTML
+    let recommendationsHTML = `<strong>Estimated Reward Range:</strong> ${globalMinReward.toFixed(2)} to ${globalMaxReward.toFixed(2)}<br><br>`;
+    recommendationsHTML += "<strong>Action Recommendations:</strong><br>";
+
+    actionData.forEach((actionObj, index) => {
+        recommendationsHTML += `${index + 1}. ${actionObj.action.toUpperCase()} - Estimated Reward: ${actionObj.reward.toFixed(2)}<br>`;
     });
 
-    document.getElementById("top-moves").innerHTML = recommendationsHTML;
+    // Display the recommendations in the 'top-moves' element
+    const topMovesElement = document.getElementById("top-moves");
+    if (topMovesElement) {
+        topMovesElement.innerHTML = recommendationsHTML;
+    } else {
+        console.error("Element with ID 'top-moves' not found.");
+    }
 
     // Hand strength simulation
     let maxPlayerBet = 10; 
@@ -1100,30 +1135,66 @@ function match(checked, betMultiplier) {
     }
 
     // CFR Recommendations
+    // Prepare the current state
     const currentState = {
-        playerHand: playersHands[0], 
-        pot: thePot, 
-        currentBet: bet, 
-        activePlayers: activePlayers.length 
+        playerHand: playersHands[0], // Principal player hand
+        pot: thePot, // Pot size
+        currentBet: bet, // Initial bet
+        activePlayers: activePlayers.length, // Active players
+        cardsDealt: communityCards.length + playersHands[0].length // Number of cards dealt
     };
 
+    // Expose currentState and getCurrentState globally
+    window.currentState = currentState;
+    window.getCurrentState = function() {
+        return window.currentState;
+    };
+
+    // Train the CFR algorithm
+    for (let i = 0; i < 10000; i++) {
+        playRound();
+    }
+
+    // Get the current strategy
+    let strategy = getStrategy();
+
+    // Possible actions
     const possibleActions = ['check', 'match', 'raise', 'allin'];
-    const actionRewards = possibleActions.map(action => {
-        return { action, reward: calculateReward(currentState, action) };
+
+    // Calculate estimated rewards and probabilities
+    const actionData = possibleActions.map(action => {
+        const reward = calculateReward(currentState, action);
+        const probability = strategy[action] || 0;
+        return { action, reward, probability };
     });
 
-    // Sort
-    actionRewards.sort((a, b) => b.reward - a.reward);
+    // Sort actions based on estimated rewards (descending)
+    actionData.sort((a, b) => b.reward - a.reward);
 
-    const topActions = actionRewards.slice(0, 4); 
+    // Retrieve the global min and max rewards
+    const minRewards = getMinRewards();
+    const maxRewards = getMaxRewards();
 
-    // Show recommendations
-    let recommendationsHTML = "";
-    topActions.forEach((action, index) => {
-        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Estimated Reward: ${action.reward.toFixed(2)})<br>`;
+    // Calculate overall reward range across all actions
+    const allRewards = Object.values(minRewards).concat(Object.values(maxRewards));
+    const globalMinReward = Math.min(...allRewards);
+    const globalMaxReward = Math.max(...allRewards);
+
+    // Prepare recommendations HTML
+    let recommendationsHTML = `<strong>Estimated Reward Range:</strong> ${globalMinReward.toFixed(2)} to ${globalMaxReward.toFixed(2)}<br><br>`;
+    recommendationsHTML += "<strong>Action Recommendations:</strong><br>";
+
+    actionData.forEach((actionObj, index) => {
+        recommendationsHTML += `${index + 1}. ${actionObj.action.toUpperCase()} - Estimated Reward: ${actionObj.reward.toFixed(2)}<br>`;
     });
 
-    document.getElementById("top-moves").innerHTML = recommendationsHTML;
+    // Display the recommendations in the 'top-moves' element
+    const topMovesElement = document.getElementById("top-moves");
+    if (topMovesElement) {
+        topMovesElement.innerHTML = recommendationsHTML;
+    } else {
+        console.error("Element with ID 'top-moves' not found.");
+    }
 
      let player1Bet = 0;
      let maxPlayerBet = 10; // Minimun bet

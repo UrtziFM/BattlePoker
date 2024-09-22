@@ -16,6 +16,21 @@ let strategySum = {
     'allin': 0
 };
 
+// New reward range trackers
+let minRewards = {
+    'check': Infinity,
+    'match': Infinity,
+    'raise': Infinity,
+    'allin': Infinity
+};
+
+let maxRewards = {
+    'check': -Infinity,
+    'match': -Infinity,
+    'raise': -Infinity,
+    'allin': -Infinity
+};
+
 // Function to obtain the strategy based on regrets
 function getStrategy() {
     let normalizingSum = 0;
@@ -65,7 +80,7 @@ function recommendAction() {
     let recommendedAction = Object.keys(strategy).reduce((a, b) => strategy[a] > strategy[b] ? a : b);
 
     // Display the recommendation on the player's interface
-    document.getElementById("recommendation").innerHTML = `Recommendation: ${recommendedAction.toUpperCase()} 
+    document.getElementById("top-moves").innerHTML = `Recommendation: ${recommendedAction.toUpperCase()} 
     (${(strategy[recommendedAction] * 100).toFixed(2)}%)`;
 }
 
@@ -104,50 +119,39 @@ function selectAction(strategy) {
 }
 
 function calculateReward(currentState, action) {
-    const handStrength = calculateHandStrength(currentState.playerHand); // Strength of the player's hand
-    const potSize = currentState.pot; // Current pot size
-    const playerBet = currentState.currentBet; // Player's current bet
-    const remainingPlayers = currentState.activePlayers; // Remaining players in the round
+    const handStrength = calculateHandStrength(currentState.playerHand, currentState.communityCards || []);
+    const potSize = currentState.pot;
+    const playerBet = currentState.currentBet;
+    const remainingPlayers = currentState.activePlayers;
 
-    // Calculate an estimation of the reward for the specific action
     let estimatedReward = 0;
 
     // Define reward based on the selected action
     switch (action) {
         case 'check':
-            // Check: Does not change the bet, reward based on hand strength and if other players can bet
             estimatedReward = handStrength - 0.5; // Slight penalty for not betting
             break;
 
         case 'match':
-            // Match: Reward based on hand strength compared to the current bet
             if (handStrength > 5) { 
-                // If the hand is strong, it's more likely that "match" is a good option
                 estimatedReward = (potSize - playerBet) * (handStrength / 10);
             } else {
-                // If the hand is weak, it's less likely that "match" is a good option
                 estimatedReward = -(playerBet / 2);
             }
             break;
 
         case 'raise':
-            // Raise: Higher reward for trying to increase the pot
             if (handStrength > 7) {
-                // If the hand is very strong, increasing the bet can be beneficial
                 estimatedReward = potSize * (handStrength / 8);
             } else {
-                // Penalty if the hand is not strong enough to justify a "raise"
                 estimatedReward = -(playerBet);
             }
             break;
 
         case 'allin':
-            // All in: Very high reward if the hand is extremely strong, otherwise penalty
             if (handStrength > 8) {
-                // All-in with a very strong hand
                 estimatedReward = potSize * (handStrength / 5);
             } else {
-                // Large penalty if going "all-in" with a weak hand
                 estimatedReward = -(playerBet * 2);
             }
             break;
@@ -157,14 +161,22 @@ function calculateReward(currentState, action) {
             break;
     }
 
-    // Adjust the reward to take into account the number of remaining players
+    // Adjust the reward based on the number of remaining players
     if (remainingPlayers > 2) {
-        estimatedReward *= (3 / remainingPlayers); // Adjust reward if there are many players
+        estimatedReward *= (3 / remainingPlayers);
     }
 
     // Consider additional factors such as statistical probabilities of improving the hand
     const improvementFactor = getImprovementFactor(currentState);
     estimatedReward *= improvementFactor;
+
+    // Update min and max rewards
+    if (estimatedReward < minRewards[action]) {
+        minRewards[action] = estimatedReward;
+    }
+    if (estimatedReward > maxRewards[action]) {
+        maxRewards[action] = estimatedReward;
+    }
 
     return estimatedReward;
 }
@@ -176,3 +188,24 @@ function getImprovementFactor(currentState) {
     // For simplicity, we use a random value between 0.8 and 1.2 to simulate this.
     return Math.random() * (1.2 - 0.8) + 0.8;
 }
+
+// At the end of CFR.js
+
+// Expose reward ranges globally
+window.getMinRewards = function() {
+    return minRewards;
+};
+
+window.getMaxRewards = function() {
+    return maxRewards;
+};
+
+// Expose other necessary functions globally
+window.calculateHandStrength = calculateHandStrength;
+window.getImprovementFactor = getImprovementFactor;
+window.getStrategy = getStrategy;
+window.playRound = playRound;
+window.calculateReward = calculateReward;
+window.recommendAction = recommendAction;
+window.selectAction = selectAction;
+
