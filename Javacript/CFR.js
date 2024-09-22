@@ -1,4 +1,6 @@
-// Inicializar diccionario de regrets para cada acción
+// CFRPlayer.js
+
+// Initialize a dictionary of regrets for each action
 let regretSum = {
     'check': 0,
     'match': 0,
@@ -6,7 +8,7 @@ let regretSum = {
     'allin': 0
 };
 
-// Inicializar diccionario de estrategias
+// Initialize a dictionary of strategies
 let strategySum = {
     'check': 0,
     'match': 0,
@@ -14,18 +16,18 @@ let strategySum = {
     'allin': 0
 };
 
-// Función para obtener la estrategia basada en regrets
+// Function to obtain the strategy based on regrets
 function getStrategy() {
     let normalizingSum = 0;
     let strategy = {};
 
-    // Calcular la estrategia de acuerdo al regret
+    // Calculate the strategy according to the regret
     Object.keys(regretSum).forEach(action => {
         strategy[action] = Math.max(regretSum[action], 0);
         normalizingSum += strategy[action];
     });
 
-    // Normalizar la estrategia
+    // Normalize the strategy
     Object.keys(strategy).forEach(action => {
         if (normalizingSum > 0) {
             strategy[action] /= normalizingSum;
@@ -38,9 +40,9 @@ function getStrategy() {
     return strategy;
 }
 
-// Función para actualizar regrets basados en el resultado de la ronda
+// Function to update regrets based on the result of the round
 function updateRegrets(action, reward, counterfactualRewards) {
-    // Calcular regrets contrafactuales
+    // Calculate counterfactual regrets
     Object.keys(regretSum).forEach(a => {
         let regret = counterfactualRewards[a] - reward;
         regretSum[a] += regret;
@@ -62,33 +64,33 @@ function recommendAction() {
     let strategy = getStrategy();
     let recommendedAction = Object.keys(strategy).reduce((a, b) => strategy[a] > strategy[b] ? a : b);
 
-    // Mostrar la recomendación en la interfaz del jugador
-    document.getElementById("recommendation").innerHTML = `Recomendación: ${recommendedAction.toUpperCase()} 
+    // Display the recommendation on the player's interface
+    document.getElementById("recommendation").innerHTML = `Recommendation: ${recommendedAction.toUpperCase()} 
     (${(strategy[recommendedAction] * 100).toFixed(2)}%)`;
 }
 
-// Ejemplo de cómo utilizar estas funciones durante una ronda del juego
+// Example of how to use these functions during a round of the game
 function playRound() {
-    let currentState = getCurrentState(); // Define una función para obtener el estado actual del juego
+    let currentState = getCurrentState(); // Define a function to get the current state of the game
     let strategy = getStrategy();
 
-    // Simular una decisión del jugador basada en la estrategia actual
+    // Simulate a decision of the player based on the current strategy
     let action = selectAction(strategy);
 
-    // Calcular recompensas contrafactuales para todas las acciones posibles
+    // Calculate counterfactual rewards for all possible actions
     let counterfactualRewards = calculateCounterfactualRewards(currentState, strategy);
 
-    // Asumir que reward es la recompensa para la acción tomada
+    // Assume that reward is the reward for the action taken
     let reward = counterfactualRewards[action];
 
-    // Actualizar regrets basados en el resultado
+    // Update regrets based on the result
     updateRegrets(action, reward, counterfactualRewards);
 
-    // Recomendar una acción basada en los regrets acumulados
+    // Recommend an action based on the accumulated regrets
     recommendAction();
 }
 
-// Función para seleccionar una acción basada en la estrategia
+// Function to select an action based on the strategy
 function selectAction(strategy) {
     let randomValue = Math.random();
     let cumulativeProbability = 0.0;
@@ -98,80 +100,79 @@ function selectAction(strategy) {
             return action;
         }
     }
-    return 'check'; // Acción por defecto
+    return 'check'; // Default action
 }
 
 function calculateReward(currentState, action) {
-    const handStrength = calculateHandStrength(currentState.playerHand); // Fuerza de la mano del jugador
-    const potSize = currentState.pot; // Tamaño del pot actual
-    const playerBet = currentState.currentBet; // Apuesta actual del jugador
-    const remainingPlayers = currentState.activePlayers; // Jugadores restantes en la ronda
+    const handStrength = calculateHandStrength(currentState.playerHand); // Strength of the player's hand
+    const potSize = currentState.pot; // Current pot size
+    const playerBet = currentState.currentBet; // Player's current bet
+    const remainingPlayers = currentState.activePlayers; // Remaining players in the round
 
-    // Calcula una estimación de la recompensa para la acción específica
+    // Calculate an estimation of the reward for the specific action
     let estimatedReward = 0;
 
-    // Definir recompensa basada en la acción seleccionada
+    // Define reward based on the selected action
     switch (action) {
         case 'check':
-            // Check: No cambia la apuesta, recompensa basada en la fuerza de la mano y si otros jugadores pueden apostar
-            estimatedReward = handStrength - 0.5; // Penalización leve por no apostar
+            // Check: Does not change the bet, reward based on hand strength and if other players can bet
+            estimatedReward = handStrength - 0.5; // Slight penalty for not betting
             break;
 
         case 'match':
-            // Match: Recompensa basada en la fuerza de la mano comparada con la apuesta actual
+            // Match: Reward based on hand strength compared to the current bet
             if (handStrength > 5) { 
-                // Si la mano es fuerte, es más probable que "match" sea una buena opción
+                // If the hand is strong, it's more likely that "match" is a good option
                 estimatedReward = (potSize - playerBet) * (handStrength / 10);
             } else {
-                // Si la mano es débil, es menos probable que "match" sea una buena opción
+                // If the hand is weak, it's less likely that "match" is a good option
                 estimatedReward = -(playerBet / 2);
             }
             break;
 
         case 'raise':
-            // Raise: Recompensa más alta por intentar aumentar el pot
+            // Raise: Higher reward for trying to increase the pot
             if (handStrength > 7) {
-                // Si la mano es muy fuerte, aumentar la apuesta puede ser beneficioso
+                // If the hand is very strong, increasing the bet can be beneficial
                 estimatedReward = potSize * (handStrength / 8);
             } else {
-                // Penalización si la mano no es suficientemente fuerte para justificar un "raise"
+                // Penalty if the hand is not strong enough to justify a "raise"
                 estimatedReward = -(playerBet);
             }
             break;
 
         case 'allin':
-            // All in: Recompensa muy alta si la mano es extremadamente fuerte, de lo contrario, penalización
+            // All in: Very high reward if the hand is extremely strong, otherwise penalty
             if (handStrength > 8) {
-                // All-in con una mano muy fuerte
+                // All-in with a very strong hand
                 estimatedReward = potSize * (handStrength / 5);
             } else {
-                // Gran penalización si se va "all-in" con una mano débil
+                // Large penalty if going "all-in" with a weak hand
                 estimatedReward = -(playerBet * 2);
             }
             break;
 
         default:
-            estimatedReward = 0; // Acción desconocida
+            estimatedReward = 0; // Unknown action
             break;
     }
 
-    // Ajusta la recompensa para tener en cuenta el número de jugadores restantes
+    // Adjust the reward to take into account the number of remaining players
     if (remainingPlayers > 2) {
-        estimatedReward *= (3 / remainingPlayers); // Ajustar recompensa si hay muchos jugadores
+        estimatedReward *= (3 / remainingPlayers); // Adjust reward if there are many players
     }
 
-    // Considerar factores adicionales como probabilidades estadísticas de mejorar la mano
+    // Consider additional factors such as statistical probabilities of improving the hand
     const improvementFactor = getImprovementFactor(currentState);
     estimatedReward *= improvementFactor;
 
     return estimatedReward;
 }
 
-// Función auxiliar para calcular el factor de mejora
+// Auxiliary function to calculate the improvement factor
 function getImprovementFactor(currentState) {
-    // Calcular la probabilidad de mejorar la mano en función del número de cartas por salir, etc.
-    // Esto podría basarse en tablas de probabilidades de póker o simulaciones.
-    // Por simplicidad, usamos un valor aleatorio entre 0.8 y 1.2 para simular esto.
+    // Calculate the probability of improving the hand based on the number of cards to come, etc.
+    // This could be based on poker probability tables or simulations.
+    // For simplicity, we use a random value between 0.8 and 1.2 to simulate this.
     return Math.random() * (1.2 - 0.8) + 0.8;
 }
-
