@@ -1,178 +1,395 @@
-// CFRPlayer.js
+// CFR.js
 
-// Initialize a dictionary of regrets for each action
-let regretSum = {
-    'check': 0,
-    'match': 0,
-    'raise': 0,
-    'allin': 0
-};
+class CFRPlayer {
+    constructor() {
+        // Initialize cumulative regrets and strategy sums for each action
+        this.actions = ['check', 'call', 'raise', 'allin', 'fold'];
+        this.regretSum = {};
+        this.strategySum = {};
+        this.numActions = this.actions.length;
 
-// Initialize a dictionary of strategies
-let strategySum = {
-    'check': 0,
-    'match': 0,
-    'raise': 0,
-    'allin': 0
-};
+        this.actions.forEach(action => {
+            this.regretSum[action] = 0;
+            this.strategySum[action] = 0;
+        });
+    }
 
-// Function to obtain the strategy based on regrets
-function getStrategy() {
-    let normalizingSum = 0;
-    let strategy = {};
+    /**
+     * Calculates the current strategy based on cumulative regrets.
+     * Returns an object mapping actions to probabilities.
+     */
+    getStrategy() {
+        let normalizingSum = 0;
+        let strategy = {};
 
-    // Calculate the strategy according to the regret
-    Object.keys(regretSum).forEach(action => {
-        strategy[action] = Math.max(regretSum[action], 0);
-        normalizingSum += strategy[action];
-    });
+        // Calculate positive regrets
+        this.actions.forEach(action => {
+            strategy[action] = Math.max(this.regretSum[action], 0);
+            normalizingSum += strategy[action];
+        });
 
-    // Normalize the strategy
-    Object.keys(strategy).forEach(action => {
-        if (normalizingSum > 0) {
-            strategy[action] /= normalizingSum;
+        // Normalize the strategy
+        this.actions.forEach(action => {
+            if (normalizingSum > 0) {
+                strategy[action] /= normalizingSum;
+            } else {
+                // If all regrets are zero, select uniformly at random
+                strategy[action] = 1.0 / this.numActions;
+            }
+            // Accumulate the strategy over time
+            this.strategySum[action] += strategy[action];
+        });
+
+        return strategy;
+    }
+
+    /**
+     * Calculates the average strategy over all iterations.
+     * Returns an object mapping actions to probabilities.
+     */
+    getAverageStrategy() {
+        let averageStrategy = {};
+        let normalizingSum = 0;
+
+        this.actions.forEach(action => {
+            normalizingSum += this.strategySum[action];
+        });
+
+        this.actions.forEach(action => {
+            if (normalizingSum > 0) {
+                averageStrategy[action] = this.strategySum[action] / normalizingSum;
+            } else {
+                averageStrategy[action] = 1.0 / this.numActions;
+            }
+        });
+
+        return averageStrategy;
+    }
+
+    /**
+     * Selects an action based on the current strategy probabilities.
+     * Returns the selected action as a string.
+     */
+    selectAction(strategy) {
+        let r = Math.random();
+        let cumulativeProbability = 0.0;
+        for (let i = 0; i < this.actions.length; i++) {
+            let action = this.actions[i];
+            cumulativeProbability += strategy[action];
+            if (r < cumulativeProbability) {
+                return action;
+            }
+        }
+        return this.actions[this.actions.length - 1]; // Return last action as default
+    }
+
+    /**
+     * Updates cumulative regrets based on the difference between
+     * counterfactual rewards and the reward of the action taken.
+     */
+    updateRegrets(actionTaken, reward, counterfactualRewards) {
+        this.actions.forEach(action => {
+            let regret = counterfactualRewards[action] - reward;
+            this.regretSum[action] += regret;
+        });
+    }
+
+    /**
+     * Calculates counterfactual rewards for all possible actions.
+     * Returns an object mapping actions to estimated rewards.
+     */
+    calculateCounterfactualRewards(currentState) {
+        let rewards = {};
+        this.actions.forEach(action => {
+            if (this.isValidAction(currentState, action)) {
+                rewards[action] = this.calculateReward(currentState, action);
+            } else {
+                rewards[action] = Number.NEGATIVE_INFINITY; // Invalid actions receive a very low reward
+            }
+        });
+        return rewards;
+    }
+
+    /**
+     * Estimates the reward for a given action based on the current state.
+     * Returns a numerical value representing the estimated reward.
+     */
+    calculateReward(currentState, action) {
+        const handStrength = calculateHandStrength(currentState.playerHand, currentState.communityCards);
+        const potSize = currentState.potSize;
+        const playerBet = currentState.playerBet;
+        const remainingPlayers = currentState.remainingPlayers;
+
+        let estimatedReward = 0;
+
+        // Adjust reward based on action and hand strength
+        switch (action) {
+            case 'check':
+                if (currentState.canCheck) {
+                    estimatedReward = handStrength * 0.5; // Minimal reward for checking
+                } else {
+                    estimatedReward = Number.NEGATIVE_INFINITY; // Can't check when a bet is required
+                }
+                break;
+
+            case 'call':
+                if (currentState.canCall) {
+                    estimatedReward = handStrength * potSize - playerBet;
+                } else {
+                    estimatedReward = Number.NEGATIVE_INFINITY; // Can't call if no bet to match
+                }
+                break;
+
+            case 'raise':
+                if (currentState.canRaise) {
+                    estimatedReward = handStrength * (potSize + currentState.raiseAmount) - playerBet;
+                } else {
+                    estimatedReward = Number.NEGATIVE_INFINITY; // Can't raise if not allowed
+                }
+                break;
+
+            case 'allin':
+                if (currentState.canAllIn) {
+                    estimatedReward = handStrength * (potSize + currentState.playerStack) - playerBet;
+                } else {
+                    estimatedReward = Number.NEGATIVE_INFINITY; // Can't go all-in if not possible
+                }
+                break;
+
+            case 'fold':
+                if (currentState.canFold) {
+                    estimatedReward = -playerBet; // Lose current bet when folding
+                } else {
+                    estimatedReward = Number.NEGATIVE_INFINITY; // Can't fold if not allowed
+                }
+                break;
+
+            default:
+                estimatedReward = Number.NEGATIVE_INFINITY; // Unknown action
+                break;
+        }
+
+        // Adjust reward based on the number of remaining players
+        if (remainingPlayers > 1 && estimatedReward > Number.NEGATIVE_INFINITY) {
+            estimatedReward *= (2 / remainingPlayers); // More players increase competition
+        }
+
+        // Calculate the improvement factor based on potential to improve the hand
+        const improvementFactor = getImprovementFactor(currentState);
+        estimatedReward *= improvementFactor;
+
+        return estimatedReward;
+    }
+
+    /**
+     * Validates if an action is permissible in the current state.
+     * Returns true if the action is valid, false otherwise.
+     */
+    isValidAction(currentState, action) {
+        switch (action) {
+            case 'check':
+                return currentState.canCheck;
+            case 'call':
+                return currentState.canCall;
+            case 'raise':
+                return currentState.canRaise;
+            case 'allin':
+                return currentState.canAllIn;
+            case 'fold':
+                return currentState.canFold;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Trains the CFR algorithm over multiple iterations.
+     * `iterations` specifies the number of training iterations.
+     */
+    train(iterations, currentState) {
+        for (let i = 0; i < iterations; i++) {
+            let strategy = this.getStrategy();
+            let action = this.selectAction(strategy);
+            let counterfactualRewards = this.calculateCounterfactualRewards(currentState);
+            let reward = counterfactualRewards[action];
+            this.updateRegrets(action, reward, counterfactualRewards);
+        }
+    }
+    
+
+    /**
+     * Recommends an action based on the average strategy.
+     * Updates the recommendation in the user interface.
+     */
+    recommendAction() {
+        let averageStrategy = this.getAverageStrategy();
+        let recommendedAction = this.actions.reduce((a, b) => averageStrategy[a] > averageStrategy[b] ? a : b);
+    
+        // Return the recommendation and strategy
+        return {
+            recommendedAction,
+            averageStrategy
+        };
+    }
+    
+}
+
+/**
+ * Simplified hand strength evaluation.
+ * Returns a numerical value between 0 and 1 representing hand strength.
+ */
+function calculateHandStrength(playerHand, communityCards) {
+    const allCards = playerHand.concat(communityCards);
+    console.log('allCards:', allCards);
+
+    // Count the occurrences of each rank
+    const rankCounts = {};
+    allCards.forEach((card, index) => {
+        if (!card) {
+            console.error(`Undefined card at index ${index} in allCards`);
+        } else if (!card.value) {
+            console.error(`Card at index ${index} missing 'value' property:`, card);
         } else {
-            strategy[action] = 1.0 / Object.keys(strategy).length;
+            rankCounts[card.value] = (rankCounts[card.value] || 0) + 1;
         }
-        strategySum[action] += strategy[action];
+    })
+
+    // Identify pairs, three of a kind, etc.
+    const counts = Object.values(rankCounts);
+    const maxCount = Math.max(...counts);
+
+    // Check for flush (all same suit)
+    const suitCounts = {};
+    allCards.forEach(card => {
+        suitCounts[card.suit] = (suitCounts[card.suit] || 0) + 1;
     });
+    const maxSuitCount = Math.max(...Object.values(suitCounts));
 
-    return strategy;
-}
-
-// Function to update regrets based on the result of the round
-function updateRegrets(action, reward, counterfactualRewards) {
-    // Calculate counterfactual regrets
-    Object.keys(regretSum).forEach(a => {
-        let regret = counterfactualRewards[a] - reward;
-        regretSum[a] += regret;
-    });
-}
-
-function calculateCounterfactualRewards(currentState, strategy) {
-    let rewards = {
-        'check': calculateReward(currentState, 'check'),
-        'match': calculateReward(currentState, 'match'),
-        'raise': calculateReward(currentState, 'raise'),
-        'allin': calculateReward(currentState, 'allin')
-    };
-
-    return rewards;
-}
-
-function recommendAction() {
-    let strategy = getStrategy();
-    let recommendedAction = Object.keys(strategy).reduce((a, b) => strategy[a] > strategy[b] ? a : b);
-
-    // Display the recommendation on the player's interface
-    document.getElementById("recommendation").innerHTML = `Recommendation: ${recommendedAction.toUpperCase()} 
-    (${(strategy[recommendedAction] * 100).toFixed(2)}%)`;
-}
-
-// Example of how to use these functions during a round of the game
-function playRound() {
-    let currentState = getCurrentState(); // Define a function to get the current state of the game
-    let strategy = getStrategy();
-
-    // Simulate a decision of the player based on the current strategy
-    let action = selectAction(strategy);
-
-    // Calculate counterfactual rewards for all possible actions
-    let counterfactualRewards = calculateCounterfactualRewards(currentState, strategy);
-
-    // Assume that reward is the reward for the action taken
-    let reward = counterfactualRewards[action];
-
-    // Update regrets based on the result
-    updateRegrets(action, reward, counterfactualRewards);
-
-    // Recommend an action based on the accumulated regrets
-    recommendAction();
-}
-
-// Function to select an action based on the strategy
-function selectAction(strategy) {
-    let randomValue = Math.random();
-    let cumulativeProbability = 0.0;
-    for (let action in strategy) {
-        cumulativeProbability += strategy[action];
-        if (randomValue < cumulativeProbability) {
-            return action;
+    // Check for straight
+    const rankOrder = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const rankIndices = allCards.map(card => rankOrder.indexOf(card.rank)).sort((a, b) => a - b);
+    let isStraight = false;
+    for (let i = 0; i <= rankIndices.length - 5; i++) {
+        if (rankIndices[i + 4] - rankIndices[i] === 4) {
+            isStraight = true;
+            break;
         }
     }
-    return 'check'; // Default action
-}
 
-function calculateReward(currentState, action) {
-    const handStrength = calculateHandStrength(currentState.playerHand); // Strength of the player's hand
-    const potSize = currentState.pot; // Current pot size
-    const playerBet = currentState.currentBet; // Player's current bet
-    const remainingPlayers = currentState.activePlayers; // Remaining players in the round
-
-    // Calculate an estimation of the reward for the specific action
-    let estimatedReward = 0;
-
-    // Define reward based on the selected action
-    switch (action) {
-        case 'check':
-            // Check: Does not change the bet, reward based on hand strength and if other players can bet
-            estimatedReward = handStrength - 0.5; // Slight penalty for not betting
-            break;
-
-        case 'match':
-            // Match: Reward based on hand strength compared to the current bet
-            if (handStrength > 5) { 
-                // If the hand is strong, it's more likely that "match" is a good option
-                estimatedReward = (potSize - playerBet) * (handStrength / 10);
-            } else {
-                // If the hand is weak, it's less likely that "match" is a good option
-                estimatedReward = -(playerBet / 2);
-            }
-            break;
-
-        case 'raise':
-            // Raise: Higher reward for trying to increase the pot
-            if (handStrength > 7) {
-                // If the hand is very strong, increasing the bet can be beneficial
-                estimatedReward = potSize * (handStrength / 8);
-            } else {
-                // Penalty if the hand is not strong enough to justify a "raise"
-                estimatedReward = -(playerBet);
-            }
-            break;
-
-        case 'allin':
-            // All in: Very high reward if the hand is extremely strong, otherwise penalty
-            if (handStrength > 8) {
-                // All-in with a very strong hand
-                estimatedReward = potSize * (handStrength / 5);
-            } else {
-                // Large penalty if going "all-in" with a weak hand
-                estimatedReward = -(playerBet * 2);
-            }
-            break;
-
-        default:
-            estimatedReward = 0; // Unknown action
-            break;
+    // Assign strength based on hand type
+    let strength = 0;
+    if (maxSuitCount >= 5 && isStraight) {
+        // Straight flush
+        strength = 1.0;
+    } else if (maxCount === 4) {
+        // Four of a kind
+        strength = 0.9;
+    } else if (maxCount === 3 && counts.includes(2)) {
+        // Full house
+        strength = 0.8;
+    } else if (maxSuitCount >= 5) {
+        // Flush
+        strength = 0.7;
+    } else if (isStraight) {
+        // Straight
+        strength = 0.6;
+    } else if (maxCount === 3) {
+        // Three of a kind
+        strength = 0.5;
+    } else if (counts.filter(count => count === 2).length >= 2) {
+        // Two pair
+        strength = 0.4;
+    } else if (maxCount === 2) {
+        // One pair
+        strength = 0.3;
+    } else {
+        // High card
+        strength = 0.2;
     }
 
-    // Adjust the reward to take into account the number of remaining players
-    if (remainingPlayers > 2) {
-        estimatedReward *= (3 / remainingPlayers); // Adjust reward if there are many players
-    }
+    // Adjust strength based on high card
+    const highCardIndex = Math.max(...rankIndices);
+    strength += (highCardIndex / rankOrder.length) * 0.1;
 
-    // Consider additional factors such as statistical probabilities of improving the hand
-    const improvementFactor = getImprovementFactor(currentState);
-    estimatedReward *= improvementFactor;
-
-    return estimatedReward;
+    return strength;
 }
 
-// Auxiliary function to calculate the improvement factor
+/**
+ * Calculates the probability of improving the hand.
+ * Returns a numerical value representing the improvement factor.
+ */
 function getImprovementFactor(currentState) {
-    // Calculate the probability of improving the hand based on the number of cards to come, etc.
-    // This could be based on poker probability tables or simulations.
-    // For simplicity, we use a random value between 0.8 and 1.2 to simulate this.
-    return Math.random() * (1.2 - 0.8) + 0.8;
+    const outs = calculateOuts(currentState.playerHand, currentState.communityCards);
+    const remainingCards = 52 - currentState.cardsDealt;
+    return Math.min((outs / remainingCards) * 2, 1); // Cap the factor at 1
 }
+
+/**
+ * Calculates the number of outs for the player's hand.
+ * Returns the number of cards that can improve the player's hand.
+ */
+function calculateOuts(playerHand, communityCards) {
+    // Implement a function to calculate the actual number of outs
+    // For simplicity, we'll use a basic example for a flush draw
+    const allCards = playerHand.concat(communityCards);
+    const suits = allCards.map(card => card.suit.toLowerCase());
+    const suitCounts = {};
+    suits.forEach(suit => {
+        suitCounts[suit] = (suitCounts[suit] || 0) + 1;
+    });
+
+    let maxSuitCount = 0;
+    for (let suit in suitCounts) {
+        if (suitCounts[suit] > maxSuitCount) {
+            maxSuitCount = suitCounts[suit];
+        }
+    }
+
+    if (maxSuitCount === 4) {
+        // One card away from a flush
+        return 9; // Number of remaining cards in that suit
+    } else if (maxSuitCount === 3) {
+        // Two cards away from a flush
+        return 10; // Approximate number of outs including possible straight draws
+    }
+
+    // Add logic for other types of draws (straight draws, etc.) as needed
+    return 0; // Default to zero if no significant draws
+}
+
+/**
+ * Retrieves the current state of the game.
+ * Returns an object representing the game state.
+ */
+function getCurrentState() {
+    // Replace this with actual game state data
+    return {
+        playerHand: [
+            { rank: 'A', suit: 'spades' },
+            { rank: 'K', suit: 'spades' }
+        ],
+        communityCards: [
+            { rank: 'Q', suit: 'spades' },
+            { rank: 'J', suit: 'spades' },
+            { rank: '2', suit: 'hearts' }
+        ],
+        potSize: 100,
+        playerBet: 10,
+        remainingPlayers: 3,
+        canCheck: true,
+        canCall: false,
+        canRaise: true,
+        canAllIn: true,
+        canFold: true,
+        raiseAmount: 20,
+        playerStack: 1000,
+        cardsDealt: 5 // Total cards dealt (2 hole cards + 3 community cards)
+    };
+}
+
+// Expose CFRPlayer and helper functions globally
+window.CFRPlayer = CFRPlayer;
+window.calculateHandStrength = calculateHandStrength;
+window.getImprovementFactor = getImprovementFactor;
+window.calculateOuts = calculateOuts;
+

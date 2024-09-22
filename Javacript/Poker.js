@@ -37,7 +37,7 @@ let communityCards = [];
 let thePot = 0;
 let playerMoney = localStorage.getItem('balance');
 playerMoney = playerMoney ? parseInt(playerMoney) : 500;
-
+const cfrPlayer = new CFRPlayer();
 
 document.querySelector("#playerMoney").innerHTML = playerMoney;
 
@@ -784,39 +784,6 @@ function evaluateHand(iteration, gameStep) {
     }
 }
 
-function calculateHandStrength(hand) {
-    // Mapping cards for evaluation
-    const values = hand.map(card => cardHeirarchy.indexOf(card.value));
-    const suits = hand.map(card => card.suit);
-
-    const valueCounts = {};
-    values.forEach(value => {
-        valueCounts[value] = (valueCounts[value] || 0) + 1;
-    });
-
-    // Same cards max
-    const counts = Object.values(valueCounts);
-    const maxCount = Math.max(...counts);
-
-    // Straight verify
-    const isStraight = values
-        .sort((a, b) => a - b)
-        .every((val, index, arr) => index === 0 || val === arr[index - 1] + 1);
-
-    // Flush verify
-    const isFlush = suits.every(suit => suit === suits[0]);
-
-    if (isStraight && isFlush) return 8; 
-    if (maxCount === 4) return 7; 
-    if (maxCount === 3 && counts.includes(2)) return 6; 
-    if (isFlush) return 5; 
-    if (isStraight) return 4; 
-    if (maxCount === 3) return 3; 
-    if (counts.filter(count => count === 2).length === 2) return 2; 
-    if (maxCount === 2) return 1; 
-    return 0; 
-}
-
 function endGame() {
     // Disable buttons
     document.querySelector("[data-round='max']").disabled = true;
@@ -960,10 +927,18 @@ function deal() {
         }
         let handObj = [];
         for (let i = 0; i < playersCards.length; i++) {
-            handObj.push({
-                suit: playersCards[i].substring(playersCards[i].indexOf("-") + 1, playersCards[i].length),
-                value: playersCards[i].substring(0, playersCards[i].indexOf("-"))
-            });
+            const cardTitle = playersCards[i];
+            const value = cardTitle.substring(0, cardTitle.indexOf("-"));
+            const suit = cardTitle.substring(cardTitle.indexOf("-") + 1);
+            
+            if (!value || !suit) {
+                console.error(`Invalid card title '${cardTitle}'`);
+            } else {
+                handObj.push({
+                    value: value,
+                    suit: suit
+                });
+            }
         }
         const playerElement = document.getElementById(playerIds[iteration]);
         if (playerElement) { 
@@ -981,32 +956,34 @@ function deal() {
         playerScores.push(playerScore);
     }
 
-     // CFR algorithm
-     const currentState = {
-        playerHand: playersHands[0], // Principal player hand
-        pot: thePot, // Pot size
-        currentBet: bet, // Initial bet
-        activePlayers: activePlayers.length // Active players
+    // CFR algorithm
+    
+    const currentState = {
+        playerHand: playersHands[0],
+        communityCards: communityCards,
+        potSize: thePot,
+        playerBet: bet,
+        remainingPlayers: activePlayers.length,
+        canCheck: !hasRaised,
+        canCall: hasRaised && playerMoney >= maxPlayerBet,
+        canRaise: playerMoney >= Math.ceil(maxPlayerBet * 1.25),
+        canAllIn: playerMoney > 0,
+        canFold: true,
+        raiseAmount: Math.ceil(maxPlayerBet * 1.25),
+        playerStack: playerMoney,
+        cardsDealt: communityCards.length + playersHands[0].length
     };
 
-    // CFR recommendations
-    const possibleActions = ['check', 'match', 'raise', 'allin'];
-    const actionRewards = possibleActions.map(action => {
-        return { action, reward: calculateReward(currentState, action) };
-    });
+    // Train the CFR algorithm
+    cfrPlayer.train(1000, currentState); // Adjust iterations as needed
 
-    // Sort actions
-    actionRewards.sort((a, b) => b.reward - a.reward);
+    // Get the recommended action
+    let { recommendedAction, averageStrategy } = cfrPlayer.recommendAction();
 
-    const topActions = actionRewards.slice(0, 4); 
+    // Display the recommendation
+    document.getElementById("top-moves").innerHTML = `Recommendation: ${recommendedAction.toUpperCase()} 
+    (${(averageStrategy[recommendedAction] * 100).toFixed(2)}%)`;
 
-    // Show recommendations
-    let recommendationsHTML = "";
-    topActions.forEach((action, index) => {
-        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Estimated Reward: ${action.reward.toFixed(2)})<br>`;
-    });
-
-    document.getElementById("top-moves").innerHTML = recommendationsHTML;
 
     // Hand strength simulation
     let maxPlayerBet = 10; 
@@ -1100,30 +1077,33 @@ function match(checked, betMultiplier) {
     }
 
     // CFR Recommendations
+   
     const currentState = {
-        playerHand: playersHands[0], 
-        pot: thePot, 
-        currentBet: bet, 
-        activePlayers: activePlayers.length 
+        playerHand: playersHands[0],
+        communityCards: communityCards,
+        potSize: thePot,
+        playerBet: bet,
+        remainingPlayers: activePlayers.length,
+        canCheck: !hasRaised,
+        canCall: hasRaised && playerMoney >= maxPlayerBet,
+        canRaise: playerMoney >= Math.ceil(maxPlayerBet * 1.25),
+        canAllIn: playerMoney > 0,
+        canFold: true,
+        raiseAmount: Math.ceil(maxPlayerBet * 1.25),
+        playerStack: playerMoney,
+        cardsDealt: communityCards.length + playersHands[0].length
     };
 
-    const possibleActions = ['check', 'match', 'raise', 'allin'];
-    const actionRewards = possibleActions.map(action => {
-        return { action, reward: calculateReward(currentState, action) };
-    });
+    // Train the CFR algorithm
+    cfrPlayer.train(1000, currentState); // Adjust iterations as needed
 
-    // Sort
-    actionRewards.sort((a, b) => b.reward - a.reward);
+    // Get the recommended action
+    let { recommendedAction, averageStrategy } = cfrPlayer.recommendAction();
 
-    const topActions = actionRewards.slice(0, 4); 
+    // Display the recommendation
+    document.getElementById("top-moves").innerHTML = `Recommendation: ${recommendedAction.toUpperCase()} 
+    (${(averageStrategy[recommendedAction] * 100).toFixed(2)}%)`;
 
-    // Show recommendations
-    let recommendationsHTML = "";
-    topActions.forEach((action, index) => {
-        recommendationsHTML += `${index + 1}. ${action.action.toUpperCase()} (Estimated Reward: ${action.reward.toFixed(2)})<br>`;
-    });
-
-    document.getElementById("top-moves").innerHTML = recommendationsHTML;
 
      let player1Bet = 0;
      let maxPlayerBet = 10; // Minimun bet
