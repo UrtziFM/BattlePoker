@@ -21,9 +21,7 @@ function choosePoker(option) {
 function openGame(gameId) {
     // Map the gameId to the actual game page URLs
     var gamePages = {
-      'game1': '../BattleChess/Chess.html',
-      'game2': 'Poker.html',
-      'game3': '../BattleRisk/Main.html'
+      'trilogy': '../Main.html'
     };
   
     // Get the URL for the selected game
